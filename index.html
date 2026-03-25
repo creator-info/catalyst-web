@@ -23,13 +23,17 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; scroll-behavior: smooth; }
-        /* ... твой существующий CSS ... */
+        .btn-primary { background: #facc15; color: #0f172a; transition: all 0.2s; }
+        .btn-primary:hover { background: #eab308; transform: translateY(-2px); }
+        .floating-wa { position: fixed; bottom: 20px; right: 20px; background-color: #25D366; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s;}
+        .floating-wa:hover { transform: scale(1.1); }
     </style>
 </head>
-    <a href="https://wa.me/77053638505" class="floating-wa" target="_blank">
-    <i class="fab fa-whatsapp"></i>
-</a>
 <body>
+    <a href="https://wa.me/77053638505" class="floating-wa" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+    
     <div id="root"></div>
 
     <script type="text/babel">
@@ -55,17 +59,15 @@
             const [loading, setLoading] = useState(false);
             const [submitSuccess, setSubmitSuccess] = useState(false);
             
-            // Данные формы
             const [formData, setFormData] = useState({
                 email: '', phone: '', company: '', bin: '', projectName: '', bank: 'Kaspi'
             });
 
             const [errors, setErrors] = useState({ email: '', bin: '' });
 
-            // --- ЗАДАЧА 1: УМНАЯ ВАЛИДАЦИЯ EMAIL ---
             const validateEmail = (email) => {
                 const lower = email.toLowerCase().trim();
-                if (!lower) return ''; // Пустое поле не валидируем до onBlur
+                if (!lower) return ''; 
 
                 if (!lower.includes('@')) {
                     if (lower.includes('2')) return 'ОШИБКА: ВОЗМОЖНО ВЫ НАЖАЛИ "2" ВМЕСТО "@"';
@@ -80,7 +82,6 @@
                 if (domain.includes('gmail') && !domain.endsWith('.com')) {
                     return 'ОШИБКА: ДЛЯ GMAIL ИСПОЛЬЗУЙТЕ ОКОНЧАНИЕ .COM';
                 }
-                
                 if (domain.includes('mail') && !domain.includes('gmail') && !domain.endsWith('.ru')) {
                     return 'ОШИБКА: ДЛЯ MAIL.RU ИСПОЛЬЗУЙТЕ ОКОНЧАНИЕ .RU';
                 }
@@ -93,7 +94,6 @@
 
             const handleBlur = (e) => {
                 const { name, value } = e.target;
-                
                 if (name === 'email') {
                     setErrors(prev => ({ ...prev, email: validateEmail(value) }));
                 }
@@ -109,17 +109,14 @@
                 const { name, value } = e.target;
                 let val = value;
                 
-                // --- ЗАДАЧА 2: ВАЛИДАЦИЯ БИН/ИИН (строго 12 цифр, без букв) ---
                 if (name === 'bin') {
                     val = value.replace(/\D/g, '').slice(0, 12); 
                 }
                 
-                // МГНОВЕННО УБИРАЕМ ОШИБКУ, ПОКА ЧЕЛОВЕК ПЕЧАТАЕТ
                 setErrors(prev => ({ ...prev, [name]: '' }));
                 setFormData(prev => ({ ...prev, [name]: val }));
             };
 
-            // Проверка валидности формы для разблокировки кнопок
             const isFormValid = 
                 agreed && 
                 formData.email && 
@@ -129,11 +126,9 @@
                 formData.company.trim() !== '' &&
                 formData.phone.trim() !== '';
 
-            // --- ЗАДАЧА 5: ИНТЕГРАЦИЯ С GOOGLE SHEETS (ОБНОВЛЕННАЯ ССЫЛКА) ---
             const handleSubmitToGoogle = async (e, paymentMethod) => {
                 e.preventDefault();
                 
-                // Финальная проверка перед отправкой (валидация email и БИН)
                 const emailErr = validateEmail(formData.email);
                 if (emailErr || formData.bin.length !== 12 || !agreed) {
                     setErrors({ 
@@ -145,12 +140,8 @@
 
                 setLoading(true);
                 
-                // ТВОЯ НОВАЯ ССЫЛКА GOOGLE APPS SCRIPT (ОТ 18:48)
-                // Находишь эту строку в index.html и вставляешь новую ссылку:
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdTEugK6dn5qV3zFGMYtfM1W5h-y3wnLriUZ3yr99ElOZbYPTZ/exec";
+                const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdTEugK6dn5qV3zFGMYtfM1W5h-y3wnLriUZ3yr99ElOZbYPTZ/exec";
             
-                
-                // Подготовка данных для отправки
                 const dataToSend = new URLSearchParams({
                     email: formData.email,
                     phone: formData.phone,
@@ -162,18 +153,15 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                 });
 
                 try {
-                    // Отправка данных
-                    await fetch(scriptUrl, {
+                    await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors', // Важно для работы с Google Script
+                        mode: 'no-cors', 
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: dataToSend.toString()
                     });
                     
-                    // Если дошли сюда — считаем отправку успешной
                     setSubmitSuccess(true);
                     
-                    // Авто-закрытие окна через 4 секунды после успеха
                     setTimeout(() => {
                         setModal('none');
                         setSubmitSuccess(false);
@@ -193,8 +181,6 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
 
             return (
                 <div className="min-h-screen flex flex-col">
-                    
-                    {/* --- ШАПКА (НАВИГАЦИЯ) --- */}
                     <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#0f172a] border-b-2 border-white/5 h-24">
                         <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
                             <div className="flex items-center gap-4">
@@ -206,78 +192,69 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                             </div>
 
                             <div className="hidden lg:flex items-center gap-10">
-                        <a href="#about" className="nav-link">О нас</a>
-                        <a href="#services" className="nav-link">Услуги и стоимость</a>
-                        <a href="#program" className="nav-link">Программы</a>
-                        <a href="#academy" className="nav-link">Академия экспертов</a>
-                    </div>
+                                <a href="#about" className="text-sm font-bold uppercase tracking-widest hover:text-[#facc15] transition-colors">О нас</a>
+                                <a href="#services" className="text-sm font-bold uppercase tracking-widest hover:text-[#facc15] transition-colors">Услуги</a>
+                                <a href="#program" className="text-sm font-bold uppercase tracking-widest hover:text-[#facc15] transition-colors">Программы</a>
+                                <a href="#academy" className="text-sm font-bold uppercase tracking-widest hover:text-[#facc15] transition-colors">Академия</a>
+                            </div>
 
-                    <div className="flex items-center gap-6">
-                        {/* Новая кнопка Кабинета */}
-                        <a href="cabinet.html" className="hidden lg:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-[#facc15] transition-colors border border-white/10 px-4 py-2 rounded-lg bg-white/5">
-                            <i className="fas fa-user-circle text-lg"></i> Кабинет
-                        </a>
-
-                        <a href="https://wa.me/77053638505" target="_blank" className="btn-primary px-8 py-4 rounded-xl">
-                            НАПИСАТЬ <i className="fab fa-whatsapp ml-2 text-xl"></i>
-                        </a>
-                    </div>
+                            <div className="flex items-center gap-6">
+                                <a href="cabinet.html" className="hidden lg:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-[#facc15] transition-colors border border-white/10 px-4 py-2 rounded-lg bg-white/5">
+                                    <i className="fas fa-user-circle text-lg"></i> Кабинет
+                                </a>
+                                <a href="https://wa.me/77053638505" target="_blank" className="btn-primary px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest hidden md:block">
+                                    НАПИСАТЬ <i className="fab fa-whatsapp ml-2 text-xl"></i>
+                                </a>
+                            </div>
                         </div>
                     </nav>
 
                     <main className="pt-24">
-                        {/* --- HERO БЛОК --- */}
-                        {/* --- HERO БЛОК (ИСПРАВЛЕННЫЙ ДИЗАЙН) --- */}
-<section className="max-w-7xl mx-auto px-6 py-24 lg:py-40 flex flex-col lg:flex-row gap-20 items-center">
-    <div className="lg:w-3/5 space-y-10">
-        <div className="inline-block px-4 py-1.5 bg-white/5 text-[#facc15] rounded-full text-[11px] font-black tracking-[0.3em] uppercase border border-white/10">
-            Премиум консалтинг
-        </div>
-        <h1 className="text-5xl lg:text-[5.5rem] font-black leading-[1.05] text-white uppercase tracking-tighter">
-            Экспертное <br/> сопровождение <br/>
-            <span className="text-slate-500">проектов.</span>
-        </h1>
-        <p className="text-slate-400 text-xl lg:text-2xl max-w-2xl leading-relaxed italic font-medium">
-            Комплексная подготовка вашего бизнеса к привлечению инвестиций на уровне стандартов НИХ «Байтерек». Практическая программа от топ-менеджеров рынка.
-        </p>
-    </div>
-    
-    <div className="lg:w-2/5 w-full">
-        {/* КАРТОЧКА С ЦЕНОЙ — ВЕРНУЛ GLASS-ЭФФЕКТ */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-12 rounded-[3rem] shadow-2xl relative border-l-[10px] border-l-[#facc15]">
-            {/* Логотип SDU в углу */}
-            <div className="absolute top-8 right-8 w-14 h-14 bg-black rounded-xl flex items-center justify-center overflow-hidden border border-white/10">
-                <img src="image_98e027.jpg" alt="SDU" className="w-full h-full object-contain" />
-            </div>
-            
-            <h2 className="text-2xl lg:text-3xl font-black uppercase mb-2 text-white">Бизнес-инкубация 0→1</h2>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-12">Для Qazinnovations</p>
-            
-            <div className="text-6xl lg:text-7xl font-black mb-12 tracking-tighter text-white">
-                10 000 <span className="text-[#facc15] text-2xl uppercase tracking-normal">₸</span>
-            </div>
-            
-            <button onClick={() => setModal('intro')} className="w-full bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-6 rounded-2xl text-lg transition-all transform hover:-translate-y-1 shadow-xl uppercase">
-                ПОЛУЧИТЬ СЕРТИФИКАТ
-            </button>
-        </div>
-    </div>
-</section>
+                        <section className="max-w-7xl mx-auto px-6 py-24 lg:py-40 flex flex-col lg:flex-row gap-20 items-center">
+                            <div className="lg:w-3/5 space-y-10">
+                                <div className="inline-block px-4 py-1.5 bg-white/5 text-[#facc15] rounded-full text-[11px] font-black tracking-[0.3em] uppercase border border-white/10">
+                                    Премиум консалтинг
+                                </div>
+                                <h1 className="text-5xl lg:text-[5.5rem] font-black leading-[1.05] text-white uppercase tracking-tighter">
+                                    Экспертное <br/> сопровождение <br/><br/>
+                                    <span className="text-slate-500">проектов.</span>
+                                </h1>
+                                <p className="text-slate-400 text-xl lg:text-2xl max-w-2xl leading-relaxed italic font-medium">
+                                    Комплексная подготовка вашего бизнеса к привлечению инвестиций на уровне стандартов НИХ «Байтерек». Практическая программа от топ-менеджеров рынка.
+                                </p>
+                            </div>
+                            
+                            <div className="lg:w-2/5 w-full">
+                                <div className="bg-white/5 backdrop-blur-md border border-white/10 p-12 rounded-[3rem] shadow-2xl relative border-l-[10px] border-l-[#facc15]">
+                                    <div className="absolute top-8 right-8 w-14 h-14 bg-black rounded-xl flex items-center justify-center overflow-hidden border border-white/10">
+                                        <img src="image_98e027.jpg" alt="SDU" className="w-full h-full object-contain" />
+                                    </div>
+                                    
+                                    <h2 className="text-2xl lg:text-3xl font-black uppercase mb-2 text-white">Бизнес-инкубация 0→1</h2>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-12">Для Qazinnovations</p>
+                                    
+                                    <div className="text-6xl lg:text-7xl font-black mb-12 tracking-tighter text-white">
+                                        10 000 <span className="text-[#facc15] text-2xl uppercase tracking-normal">₸</span>
+                                    </div>
+                                    
+                                    <button onClick={() => setModal('intro')} className="w-full bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-6 rounded-2xl text-lg transition-all transform hover:-translate-y-1 shadow-xl uppercase">
+                                        ПОЛУЧИТЬ СЕРТИФИКАТ
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
 
-                        {/* --- ЗАДАЧА 2: РАЗДЕЛ "О НАС" И СПИКЕРЫ --- */}
                         <section id="about" className="bg-white text-slate-900 py-32">
                             <div className="max-w-7xl mx-auto px-6">
                                 <div className="mb-24 space-y-8 max-w-5xl">
                                     <h2 className="text-sm font-black uppercase tracking-[0.5em] text-[#ca8a04] border-b-4 border-[#facc15] inline-block pb-2">О НАС: Catalyst Consult</h2>
                                     <p className="text-3xl lg:text-5xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.5]">Catalyst Consult - это специализированная инвестиционная экосистема и экспертный катализатор.</p>
-                                    <p className="text-xl text-slate-500 body-regular italic leading-relaxed">Мы трансформируем бизнес-инициативы в структурированные инвестиционные активы, обеспечивая привлечение капитала для проектов стоимостью от 100 млн тенге.</p>
+                                    <p className="text-xl text-slate-500 italic leading-relaxed">Мы трансформируем бизнес-инициативы в структурированные инвестиционные активы, обеспечивая привлечение капитала для проектов стоимостью от 100 млн тенге.</p>
                                 </div>
                                 
-                                {/* Блок Экспертов (Айжан и Алишер) */}
                                 <div className="mb-32">
                                     <h3 className="text-3xl font-black uppercase text-[#0f172a] mb-12 border-l-8 border-[#facc15] pl-6">Наши Эксперты</h3>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                                        {/* Спикер 1: Айжан Берікқызы */}
                                         <div className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 shadow-lg relative overflow-hidden group hover:shadow-2xl transition-all">
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-[#facc15]/20 rounded-bl-[100px] z-0 transition-transform group-hover:scale-110"></div>
                                             <div className="flex items-center gap-6 mb-8 relative z-10">
@@ -289,12 +266,11 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             </div>
                                             <div className="space-y-4 text-sm text-slate-600 leading-relaxed relative z-10">
                                                 <p><b>Основатель Catalyst Consult.</b> Сертифицированный бизнес-тренер (НПП Атамекен), лектор (Университет СДУ, НИШ ФМН).</p>
-                                                <p><b>Глубокая экспертиза:</b> Стратегическое управление, инновации и предпринимательство. Специализируется на разработке грантовых заявок, бизнес-планов и коммерциализации технологий (QazInnovations, Фонд Науки).</p>
+                                                <p><b>Глубокая экспертиза:</b> Стратегическое управление, инновации и предпринимательство. Специализируется на разработке грантовых заявок, бизнес-планов и коммерциализации технологий.</p>
                                                 <p><b>Регалии:</b> Руководитель проектов на сумму свыше <b>1,5 млрд тенге</b> (Коммерциализация технологий, 2023-2025).</p>
                                             </div>
                                         </div>
 
-                                        {/* Спикер 2: Алишер Тажинов */}
                                         <div className="bg-[#0f172a] p-10 rounded-[3rem] border border-slate-800 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all">
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-[100px] z-0 transition-transform group-hover:scale-110"></div>
                                             <div className="flex items-center gap-6 mb-8 relative z-10">
@@ -318,7 +294,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                         <h3 className="text-2xl font-black uppercase text-[#0f172a]">Методология «7 экспертов»</h3>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {["MBA-стратег", "Финансовый аналитик", "Комплаенс-юрист", "Data-аналитик", "Маркетолог-стратег", "Бухгалтер-аудитор", "Инвестиционный скаут"].map((e, i) => (
-                                                <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 text-[12px] body-regular uppercase tracking-tight">
+                                                <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 text-[12px] uppercase tracking-tight">
                                                     <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-[10px]">{i+1}</div>
                                                     <b className="text-slate-900">{e}</b>
                                                 </div>
@@ -333,7 +309,6 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                             </div>
                         </section>
 
-                        {/* --- ЗАДАЧА 4: НЕЗАВИСИМАЯ МЕДИА-ГАЛЕРЕЯ (Секция на главной) --- */}
                         <section className="bg-slate-100 py-24 border-y border-slate-200">
                             <div className="max-w-4xl mx-auto px-6 text-center">
                                 <h2 className="text-4xl font-black uppercase tracking-tighter text-[#0f172a] mb-6">Достижения и регалии</h2>
@@ -344,7 +319,6 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                             </div>
                         </section>
 
-                        {/* --- УСЛУГИ И СТОИМОСТЬ --- */}
                         <section id="services" className="bg-slate-50 text-slate-900 py-32 border-y border-slate-200">
                             <div className="max-w-7xl mx-auto px-6 text-center">
                                 <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter text-[#0f172a] mb-16">2. УСЛУГИ И СТОИМОСТЬ</h2>
@@ -354,15 +328,11 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             <tr><th className="p-10">Категория</th><th className="p-10">Услуга / Суть</th><th className="p-10 text-right">Стоимость</th></tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 text-sm font-medium uppercase tracking-tight text-slate-600">
-                                            <div class="table-responsive">
-    <table>
-        </table>
-</div>
                                             {[
                                                 ["Инновации", "Бизнес-инкубация (Обучение + Сертификат)", "10 000 KZT"],
                                                 ["Скоринг", "Light-Скоринг (10 мин. экспресс-анализ)", "10 000 KZT"],
                                                 ["Аудит", "Zoom-Аудит (30 мин. детальный разбор)", "50 000 KZT"],
-                                                ["Консалтинг", "Deep-Консультация (1 час глубокого аудита 7 экспертами)", "100 000 KZT"],
+                                                ["Консалтинг", "Deep-Консультация (1 час аудита 7 экспертами)", "100 000 KZT"],
                                                 ["Обучение", "Практикум «3 простых шага к инвестиции»", "500 000 KZT"],
                                                 ["Упаковка", "Scale-up МСБ (Полная упаковка)", "1 500 000 KZT"],
                                                 ["Крупный чек", "Бизнес-план ГП (Байтерек, БРК, Даму)", "от 10 000 000 KZT"]
@@ -383,27 +353,26 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                             </div>
                         </section>
 
-                        {/* --- ПРОГРАММА ПРАКТИКУМА --- */}
                         <section id="program" className="bg-white text-slate-900 py-32">
                             <div className="max-w-5xl mx-auto px-6">
-                                <div className="calendar-note p-12 lg:p-20 relative overflow-hidden">
-                                    <div className="absolute top-0 right-10 text-slate-100 text-[10rem] lg:text-[14rem] font-black select-none pointer-events-none uppercase leading-none">15 АПР</div>
+                                <div className="p-12 lg:p-20 relative overflow-hidden bg-slate-50 rounded-[3rem] border border-slate-200 shadow-xl">
+                                    <div className="absolute top-0 right-10 text-slate-200 text-[10rem] lg:text-[14rem] font-black select-none pointer-events-none uppercase leading-none">15 АПР</div>
                                     <div className="relative z-10 space-y-10">
                                         <div className="inline-block px-5 py-2 bg-[#facc15] text-[#0f172a] rounded-lg font-black text-[11px] uppercase tracking-widest shadow-lg">Напоминание о событии</div>
                                         <h2 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.05]">3 простых шага <br/> к инвестиции</h2>
                                         
-                                        <div className="flex flex-wrap gap-x-16 gap-y-8 py-10 border-y border-slate-100 text-[#0f172a]">
+                                        <div className="flex flex-wrap gap-x-16 gap-y-8 py-10 border-y border-slate-200 text-[#0f172a]">
                                             <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Формат</p><p className="font-black text-3xl uppercase tracking-tighter">Алматы</p></div>
                                             <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Статус</p><p className="font-black text-3xl uppercase tracking-tighter">Оффлайн</p></div>
                                             <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Цена</p><p className="font-black text-3xl uppercase tracking-tighter text-[#ca8a04]">500 000 ₸</p></div>
                                         </div>
                                         
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-600 mb-8">
-                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                                                 <h4 className="font-black text-[#0f172a] uppercase mb-3"><i className="fas fa-check text-[#ca8a04] mr-2"></i>Часть 1 (Разбор проектов)</h4>
                                                 <p>Работа ведётся с реальными проектами участников. По шагам разбираются: рынок и клиент, продукт и бизнес-модель, управление, инвестиционная готовность.</p>
                                             </div>
-                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                                                 <h4 className="font-black text-[#0f172a] uppercase mb-3"><i className="fas fa-check text-[#ca8a04] mr-2"></i>Часть 2 (Практика)</h4>
                                                 <p>Имитация переговоров с инвесторами, сбор обратной связи, понимание как выстраивать работу с капиталом. Упакованные проекты идут в пул инвесторов.</p>
                                             </div>
@@ -412,20 +381,19 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                         <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mb-10">16 модулей • Интенсив с 10:00 до 19:00 • Раздаточные материалы</p>
                                         
                                         <button 
-    onClick={() => setModal('intro')} 
-    className="bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-5 px-12 rounded-2xl text-[12px] transition-all transform hover:-translate-y-1 shadow-2xl shadow-yellow-500/20 uppercase tracking-[0.2em] active:scale-95 mt-10"
->
-    ОСТАВИТЬ ЗАЯВКУ
-</button>
+                                            onClick={() => setModal('partner')} 
+                                            className="bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-5 px-12 rounded-2xl text-[12px] transition-all transform hover:-translate-y-1 shadow-2xl shadow-yellow-500/20 uppercase tracking-[0.2em] active:scale-95 mt-10"
+                                        >
+                                            ОСТАВИТЬ ЗАЯВКУ
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* --- АКАДЕМИЯ ЭКСПЕРТОВ --- */}
                         <section id="academy" className="bg-[#0f172a] text-white py-32 relative border-t border-white/5">
                             <div className="max-w-7xl mx-auto px-6">
-                                <h2 className="text-4xl lg:text-6xl header-bold mb-20 underline decoration-[#facc15] decoration-[12px] underline-offset-[16px]">Программа обучение экспертов</h2>
+                                <h2 className="text-4xl lg:text-6xl font-black mb-20 underline decoration-[#facc15] decoration-[12px] underline-offset-[16px]">Программа обучение экспертов</h2>
                                 
                                 <div className="grid lg:grid-cols-12 gap-20 items-start">
                                     <div className="lg:col-span-7 space-y-20">
@@ -436,17 +404,17 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                         ].map((item, i) => (
                                             <div key={i}>
                                                 <h3 className="text-3xl font-black uppercase mb-6 tracking-tight text-white">{item.t}</h3>
-                                                <p className="text-slate-400 text-lg body-regular italic leading-relaxed">{item.d}</p>
+                                                <p className="text-slate-400 text-lg italic leading-relaxed">{item.d}</p>
                                             </div>
                                         ))}
 
                                         <div className="bg-white/5 p-10 rounded-[2.5rem] border border-white/10 mt-16">
                                             <h4 className="text-xl font-black uppercase mb-8 text-[#facc15]">Структура программы (НПА)</h4>
-                                            <div className="space-y-6 text-sm body-regular">
-                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">I. НПА и Регуляторика</b> <span>Законы РК, промышленная политика.</span></div>
-                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">II. Регламент</b> <span>Алгоритм от подачи до мониторинга.</span></div>
-                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">III. Специфика</b> <span>Детальный разбор условий фондов.</span></div>
-                                                <div className="flex justify-between"><b className="text-white uppercase italic">IV. Комплаенс</b> <span>Гарантия прохождения СБ банков.</span></div>
+                                            <div className="space-y-6 text-sm">
+                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">I. НПА и Регуляторика</b> <span className="text-slate-300">Законы РК, промышленная политика.</span></div>
+                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">II. Регламент</b> <span className="text-slate-300">Алгоритм от подачи до мониторинга.</span></div>
+                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">III. Специфика</b> <span className="text-slate-300">Детальный разбор условий фондов.</span></div>
+                                                <div className="flex justify-between"><b className="text-white uppercase italic">IV. Комплаенс</b> <span className="text-slate-300">Гарантия прохождения СБ банков.</span></div>
                                             </div>
                                         </div>
                                     </div>
@@ -455,41 +423,31 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                         <p className="text-[12px] font-black uppercase text-slate-400 tracking-widest mb-4">Стоимость обучения</p>
                                         <div className="text-7xl font-black mb-12 tracking-tighter text-[#0f172a]">500 000 <span className="text-2xl uppercase">₸</span></div>
                                         <button 
-    onClick={() => setModal('intro')} 
-    className="bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-5 px-12 rounded-2xl text-[12px] transition-all transform hover:-translate-y-1 shadow-2xl shadow-yellow-500/20 uppercase tracking-[0.2em] active:scale-95 mt-8"
->
-    ОТПРАВИТЬ ЗАЯВКУ
-</button>
+                                            onClick={() => setModal('partner')} 
+                                            className="bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-5 px-12 rounded-2xl text-[12px] transition-all transform hover:-translate-y-1 shadow-2xl shadow-yellow-500/20 uppercase tracking-[0.2em] w-full active:scale-95 mt-8"
+                                        >
+                                            ОТПРАВИТЬ ЗАЯВКУ
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* --- ЗАДАЧА 5: ФУТЕР И КОНТАКТЫ (ЮРИДИЧЕСКАЯ ЧИСТОТА) --- */}
                         <footer className="bg-[#0f172a] border-t border-white/10 py-20">
                             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
-                                {/* Блок 1: Реквизиты */}
-                                <div className="flex flex-col gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-center md:text-right mb-6">
-    {/* Теперь ссылки будут работать на новом домене автоматически */}
-    <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
-    <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Политика конфиденциальности</a>
-    {/* Пользовательское соглашение удалено, как ты и просила */}
-</div>
+                                <div className="flex flex-col gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-center md:text-left mb-6">
+                                    <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
+                                    <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Политика конфиденциальности</a>
+                                </div>
                                 
-                                {/* Блок 2: Контакты */}
                                 <div className="space-y-4 text-center">
                                     <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#facc15]">Контакты</p>
                                     <p className="text-sm text-slate-300">A15E3B3, г. Алматы, Бостандыкский р-н,<br/>пр. Аль-Фараби, зд. 17/1.</p>
                                     <p className="text-sm text-white font-bold hover:text-[#facc15] transition-colors"><a href="mailto:info@catalyst-consult.kz">info@catalyst-consult.kz</a></p>
-                                    <p className="text-sm text-white font-bold"><a href="https://wa.me/77053638505" className="hover:text-[#facc15] transition-colors">WhatsApp / Telegram: +7 705 363 85 05</a></p>
+                                    <p className="text-sm text-white font-bold"><a href="https://wa.me/77053638505" className="hover:text-[#facc15] transition-colors">WhatsApp: +7 705 363 85 05</a></p>
                                 </div>
 
-                                {/* Блок 3: Документы и Соцсети (Удалено Пользовательское соглашение) */}
-                                <div className="flex flex-col items-center md:items-end justify-between">
-                                    <div className="flex flex-col gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-center md:text-right mb-6">
-                                        <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
-                                        <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Политика конфиденциальности</a>
-                                    </div>
+                                <div className="flex flex-col items-center md:items-end justify-center">
                                     <div className="flex gap-6 text-2xl text-white">
                                         <a href="https://www.instagram.com/catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fab fa-instagram"></i></a>
                                         <a href="https://www.threads.com/@catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fa-brands fa-threads"></i></a>
@@ -499,29 +457,20 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                         </footer>
                     </main>
 
-                    {/* --- МОДАЛЬНЫЕ ОКНА --- */}
                     {modal !== 'none' && (
-                        <div className="fixed inset-0 z-[200] modal-blur flex items-center justify-center p-4">
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                             
-                            {/* 1. ИНТРО */}
                             {modal === 'intro' && (
-                                <div className="bg-white text-slate-900 w-full max-w-4xl rounded-[3rem] p-10 lg:p-14 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
+                                <div className="bg-white text-slate-900 w-full max-w-4xl rounded-[3rem] p-10 lg:p-14 shadow-2xl relative max-h-[90vh] overflow-y-auto">
                                     <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-400 hover:text-black transition-colors"><i className="fas fa-times text-2xl"></i></button>
                                     
                                     <h3 className="text-3xl lg:text-4xl font-black uppercase text-center mb-8 tracking-tighter">Программа инкубации <span className="text-[#ca8a04]">0→1</span></h3>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                                        {/* ЗАДАЧА 3: ИНТЕГРАЦИЯ ЛОГОТИПА SDU */}
                                         <div className="bg-[#0f172a] p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
                                             <div className="flex items-center gap-4 mb-4 relative z-10">
-                                                {/* Интегрирован реальный логотип SDU Extension Center */}
                                                 <div className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-black">
-                                                    <img 
-                                                        src="image_98e027.jpg" 
-                                                        alt="SDU Extension Center" 
-                                                        onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150/0f172a/facc15?text=SDU'; }}
-                                                        className="w-full h-full object-contain" 
-                                                    />
+                                                    <img src="image_98e027.jpg" alt="SDU" className="w-full h-full object-contain" />
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-black text-[#facc15] uppercase tracking-[0.2em] leading-tight">Академический партнер</p>
@@ -530,7 +479,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             </div>
                                             <p className="text-xs font-medium opacity-90 leading-relaxed relative z-10 border-t border-white/20 pt-4">Официальная программа подготовки проектов, разработанная совместно с экспертами университета по спецзаказу <b>НАРИ АО Qazinnovations</b>.</p>
                                         </div>
-                                        <div className="bg-red-50 border border-red-200 p-6 rounded-3xl shadow-sm flex items-center relative group">
+                                        <div className="bg-red-50 border border-red-200 p-6 rounded-3xl shadow-sm flex items-center relative">
                                             <p className="text-xs font-bold text-red-700 leading-relaxed">
                                                 <i className="fas fa-exclamation-triangle text-red-500 mr-2 text-lg"></i>
                                                 <b>КРИТИЧЕСКОЕ УВЕДОМЛЕНИЕ:</b> Название проекта в выдаваемом сертификате должно <b>СТРОГО</b> соответствовать вашей заявке на грантовое финансирование!
@@ -553,17 +502,16 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                         ))}
                                     </div>
 
-                                    <button onClick={() => setModal('reg')} className="w-full btn-primary py-7 rounded-2xl text-lg shadow-2xl">ПЕРЕЙТИ К РЕГИСТРАЦИИ (10 000 ₸)</button>
+                                    <button onClick={() => setModal('reg')} className="w-full btn-primary py-7 rounded-2xl text-lg shadow-2xl font-black uppercase">ПЕРЕЙТИ К РЕГИСТРАЦИИ (10 000 ₸)</button>
                                 </div>
                             )}
 
-                            {/* 2. РЕГИСТРАЦИЯ И ОПЛАТА */}
                             {modal === 'reg' && (
                                 <div className="bg-white text-slate-900 w-full max-w-lg rounded-[3rem] p-10 relative shadow-2xl">
                                     <button onClick={() => setModal('none')} className="absolute top-6 right-6 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
                                     
                                     {submitSuccess ? (
-                                        <div className="py-12 text-center animate-fade-in">
+                                        <div className="py-12 text-center">
                                             <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                                                 <i className="fas fa-check text-5xl"></i>
                                             </div>
@@ -575,7 +523,6 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             <h3 className="text-2xl font-black uppercase tracking-tighter text-center mb-6 italic">Оформление заявки</h3>
                                             
                                             <div>
-                                                {/* ЗАДАЧА 1: EMAIL ВАЛИДАЦИЯ ТОЛЬКО ONBLUR, УБРАН ТЕКСТ В ПЛЕЙСХОЛДЕРЕ */}
                                                 <input 
                                                     type="email" name="email" placeholder="EMAIL" 
                                                     className={`w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border transition-colors ${errors.email ? 'border-red-500 bg-red-50' : 'border-slate-100 focus:border-blue-400'}`} 
@@ -587,7 +534,6 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border border-slate-100 focus:border-blue-400" value={formData.phone} onChange={handleChange} required/>
                                             
                                             <div className="grid grid-cols-2 gap-4">
-                                                {/* ЗАДАЧА 3: УНИВЕРСАЛЬНЫЕ ПОЛЯ */}
                                                 <input type="text" name="company" placeholder="НАИМЕНОВАНИЕ КОМПАНИИ / ФИО" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[10px] outline-none border border-slate-100 focus:border-blue-400" value={formData.company} onChange={handleChange} required/>
                                                 <div>
                                                     <input 
@@ -600,9 +546,8 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             </div>
 
                                             <div className="relative">
-                                                {/* ЗАДАЧА 4: УБРАН КРАСНЫЙ ФОН ПЛЕЙСХОЛДЕРА, ЧТОБЫ БЫЛО ПОНЯТНО, ЧТО ПОЛЕ ПУСТОЕ */}
                                                 {showTooltip && (
-                                                    <div className="tooltip-alert">
+                                                    <div className="absolute -top-10 left-0 bg-slate-900 text-white text-[10px] p-2 rounded-lg font-bold">
                                                         Название должно строго совпадать с заявкой в QazInnovations!
                                                     </div>
                                                 )}
@@ -628,9 +573,8 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             </label>
 
                                             <div className="grid grid-cols-1 gap-3 mt-6">
-                                                {/* БЛОКИРОВКА КНОПОК ПРИ ОШИБКАХ */}
                                                 <button onClick={(e) => handleSubmitToGoogle(e, 'Удаленный счет')} disabled={loading || !isFormValid} 
-                                                    className="w-full bg-[#0f172a] text-white py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-all">
+                                                    className="w-full bg-[#0f172a] hover:bg-slate-800 text-white py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-all">
                                                     {loading ? 'Отправка...' : 'Выставить счет по номеру (10 000 ₸)'}
                                                 </button>
                                                 <button onClick={(e) => handleSubmitToGoogle(e, 'Счет по реквизитам')} disabled={loading || !isFormValid}
@@ -643,7 +587,6 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                 </div>
                             )}
 
-                            {/* 3. ЗАЯВКА ПАРТНЕРА / ПРАКТИКУМ */}
                             {modal === 'partner' && (
                                 <div className="bg-white text-slate-900 w-full max-w-xl rounded-[3rem] p-12 shadow-2xl relative">
                                     <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
@@ -656,11 +599,9 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                             <option value="practicum">ОФФЛАЙН ПРАКТИКУМ (15 АПРЕЛЯ)</option>
                                             <option value="scout">ИНВЕСТИЦИОННЫЙ СКАУТ</option>
                                             <option value="expert">ЭКСПЕРТ-АНАЛИТИК</option>
-                                            {/* ЗАДАЧА 3: Удален пункт "Генеральный партнер" */}
                                         </select>
-                                        <button type="submit" className="w-full btn-primary py-7 rounded-2xl">Отправить заявку</button>
+                                        <button type="submit" className="w-full btn-primary py-7 font-black uppercase text-sm rounded-2xl">Отправить заявку</button>
                                     </form>
-                                    <form onSubmit={handleSubmit}>
                                 </div>
                             )}
 
@@ -669,48 +610,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                 </div>
             );
         };
-// 1. Функция управления модальным окном
-    const setModal = (isOpen) => {
-        const modal = document.getElementById('modal');
-        if (modal) {
-            if (isOpen) {
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            } else {
-                modal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            }
-        }
-    };
 
-    // 2. Функция отправки формы
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        const form = event.target;
-        const btn = form.querySelector('button');
-        const originalText = btn.innerText;
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdTEugK6dn5qV3zFGMYtfM1W5h-y3wnLriUZ3yr99ElOZbYPTZ/exec";
-
-        btn.disabled = true;
-        btn.innerText = "ОТПРАВКА...";
-
-        try {
-            const formData = new FormData(form);
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: new URLSearchParams(formData)
-            });
-            alert("Заявка успешно принята!");
-            form.reset();
-            setModal(false);
-        } catch (error) {
-            alert("Ошибка при отправке.");
-        } finally {
-            btn.disabled = false;
-            btn.innerText = originalText;
-        }
-    };
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
