@@ -220,33 +220,42 @@
 
                     <main className="pt-24">
                         {/* --- HERO БЛОК --- */}
-                        <section className="max-w-7xl mx-auto px-6 py-24 lg:py-40 flex flex-col lg:flex-row gap-20 items-center">
-                            <div className="lg:w-3/5 space-y-10">
-                                <div className="inline-block px-4 py-1.5 bg-white/5 text-[#facc15] rounded-full text-[11px] font-black tracking-[0.3em] uppercase border border-white/10">Премиум консалтинг</div>
-                                <h1 className="text-5xl lg:text-[5.5rem] header-bold leading-[1.05] text-white">
-                                    Экспертное <br/> сопровождение <br/>
-
-                                    <span className="text-slate-500">проектов.</span>
-                                </h1>
-                                <p className="text-slate-400 text-2xl max-w-2xl leading-relaxed body-regular italic">
-                                    Комплексная подготовка вашего бизнеса к привлечению инвестиций на уровне стандартов НИХ «Байтерек». Практическая программа от топ-менеджеров рынка.
-                                </p>
-                            </div>
-                            <div className="lg:w-2/5 w-full">
-                                <div className="glass-card p-12 shadow-2xl relative border-l-[10px] border-l-[#facc15]">
-                                    {/* ДОБАВЛЕН ЛОГОТИП СДУ НА ГЛАВНУЮ СТРАНИЦУ */}
-                                    <div className="absolute top-8 right-8 w-16 h-16 bg-black rounded-xl flex items-center justify-center shadow-lg overflow-hidden border border-white/10">
-                                        <img src="image_98e027.jpg" alt="SDU Extension Center" className="w-full h-full object-contain" />
-                                    </div>
-                                    <h2 className="text-3xl font-black uppercase mb-2 text-white header-bold">Бизнес-инкубация 0→1</h2>
-                                    <p className="text-[12px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-12">Для Qazinnovations</p>
-                                    <div className="text-7xl price-text mb-12">10 000 <span className="text-[#facc15] text-3xl uppercase tracking-normal">₸</span></div>
-                                    <button onClick={() => setModal('intro')} className="w-full btn-primary py-7 rounded-2xl text-lg">
-                                        ПОЛУЧИТЬ СЕРТИФИКАТ
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
+                        {/* --- HERO БЛОК (ИСПРАВЛЕННЫЙ ДИЗАЙН) --- */}
+<section className="max-w-7xl mx-auto px-6 py-24 lg:py-40 flex flex-col lg:flex-row gap-20 items-center">
+    <div className="lg:w-3/5 space-y-10">
+        <div className="inline-block px-4 py-1.5 bg-white/5 text-[#facc15] rounded-full text-[11px] font-black tracking-[0.3em] uppercase border border-white/10">
+            Премиум консалтинг
+        </div>
+        <h1 className="text-5xl lg:text-[5.5rem] font-black leading-[1.05] text-white uppercase tracking-tighter">
+            Экспертное <br/> сопровождение <br/>
+            <span className="text-slate-500">проектов.</span>
+        </h1>
+        <p className="text-slate-400 text-xl lg:text-2xl max-w-2xl leading-relaxed italic font-medium">
+            Комплексная подготовка вашего бизнеса к привлечению инвестиций на уровне стандартов НИХ «Байтерек». Практическая программа от топ-менеджеров рынка.
+        </p>
+    </div>
+    
+    <div className="lg:w-2/5 w-full">
+        {/* КАРТОЧКА С ЦЕНОЙ — ВЕРНУЛ GLASS-ЭФФЕКТ */}
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-12 rounded-[3rem] shadow-2xl relative border-l-[10px] border-l-[#facc15]">
+            {/* Логотип SDU в углу */}
+            <div className="absolute top-8 right-8 w-14 h-14 bg-black rounded-xl flex items-center justify-center overflow-hidden border border-white/10">
+                <img src="image_98e027.jpg" alt="SDU" className="w-full h-full object-contain" />
+            </div>
+            
+            <h2 className="text-2xl lg:text-3xl font-black uppercase mb-2 text-white">Бизнес-инкубация 0→1</h2>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-12">Для Qazinnovations</p>
+            
+            <div className="text-6xl lg:text-7xl font-black mb-12 tracking-tighter text-white">
+                10 000 <span className="text-[#facc15] text-2xl uppercase tracking-normal">₸</span>
+            </div>
+            
+            <button onClick={() => setModal('intro')} className="w-full bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-6 rounded-2xl text-lg transition-all transform hover:-translate-y-1 shadow-xl uppercase">
+                ПОЛУЧИТЬ СЕРТИФИКАТ
+            </button>
+        </div>
+    </div>
+</section>
 
                         {/* --- ЗАДАЧА 2: РАЗДЕЛ "О НАС" И СПИКЕРЫ --- */}
                         <section id="about" className="bg-white text-slate-900 py-32">
