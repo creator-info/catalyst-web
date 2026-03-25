@@ -3,431 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalyst Consult — Платформа инкубации 0→1</title>
-    
+    <title>Catalyst Consult — Экспертное сопровождение</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+        
+        body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; scroll-behavior: smooth; }
+        
+        /* Крупная и очень контрастная навигация */
+        .nav-link { color: #ffffff !important; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
+        .nav-link:hover { color: #facc15 !important; }
+
+        .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 2.5rem; }
+        
+        /* Текстовые стили */
+        .header-bold { font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+        .body-regular { font-weight: 400; color: #94a3b8; } /* Slate-400 */
+        .price-text { font-weight: 900; letter-spacing: -2px; color: #ffffff; }
+        
+        .calendar-note { background: #ffffff; color: #0f172a; border-left: 12px solid #facc15; border-radius: 2.5rem; box-shadow: 0 40px 80px -15px rgba(0,0,0,0.5); }
+        
+        .modal-blur { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(12px); }
+        
+        /* Яркая желтая кнопка */
+        .btn-primary { background-color: #facc15; color: #0f172a; font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
+        .btn-primary:hover { background-color: #eab308; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.4); }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState } = React;
 
-        // --- КОНФИГУРАЦИЯ ---
-        const API_URL = "https://AigerimMu.pythonanywhere.com";
+        const App = () => {
+            const [modal, setModal] = useState('none'); // none, intro, reg, pay, partner
+            const [agreed, setAgreed] = useState(false);
 
-        // --- ЭМУЛЯЦИЯ LUCIDE-REACT ЧЕРЕЗ FONTAWESOME ---
-        // Это позволяет оставить ваш код без изменений (использовать <Menu />, <X /> и т.д.)
-        const Menu = () => <i className="fas fa-bars"></i>;
-        const X = () => <i className="fas fa-times"></i>;
-        const ChevronDown = () => <i className="fas fa-chevron-down"></i>;
-        const ChevronRight = () => <i className="fas fa-chevron-right"></i>;
-        const PlayCircle = ({ size, className }) => <i className={`fas fa-play-circle ${className}`} style={{fontSize: size}}></i>;
-        const Lock = ({ size, className }) => <i className={`fas fa-lock ${className}`} style={{fontSize: size}}></i>;
-        const CheckCircle = ({ size, className }) => <i className={`fas fa-check-circle ${className}`} style={{fontSize: size}}></i>;
-        const FileText = ({ size, className }) => <i className={`fas fa-file-alt ${className}`} style={{fontSize: size}}></i>;
-        const AlertTriangle = ({ size, className }) => <i className="fas fa-exclamation-triangle"></i>;
-        const Users = ({ size, className }) => <i className="fas fa-users"></i>;
-        const BookOpen = ({ size, className }) => <i className="fas fa-book-open"></i>;
-        const Settings = ({ size, className }) => <i className="fas fa-cog"></i>;
-        const BarChart3 = ({ size, className }) => <i className="fas fa-chart-bar"></i>;
-        const LogOut = ({ size }) => <i className="fas fa-sign-out-alt" style={{fontSize: size}}></i>;
-        const Award = ({ size }) => <i className="fas fa-award" style={{fontSize: size}}></i>;
-        const RefreshCcw = ({ className, size }) => <i className={`fas fa-sync-alt fa-spin ${className}`} style={{fontSize: size}}></i>;
-        const ShieldCheck = ({ size }) => <i className="fas fa-shield-alt" style={{fontSize: size}}></i>;
-        const ArrowLeft = ({ size }) => <i className="fas fa-arrow-left" style={{fontSize: size}}></i>;
-        const FastForward = ({ size }) => <i className="fas fa-fast-forward" style={{fontSize: size}}></i>;
-
-        // --- MOCK DATA ---
-        const EXPERTS = [
-          { id: 1, name: "Аскар Болатов", role: "MBA-стратегия", desc: "Эксперт по масштабированию бизнеса." },
-          { id: 2, name: "Динара Сакенова", role: "Корпоративные Финансы", desc: "Привлечение инвестиций и фин. моделирование." },
-          { id: 3, name: "Тимур Омаров", role: "НПА-Комплаенс", desc: "Юридическое сопровождение проектов." },
-          { id: 4, name: "Елена Кан", role: "Data Science & AI", desc: "Внедрение данных в бизнес-процессы." },
-          { id: 5, name: "Марат Исаев", role: "Performance Маркетинг", desc: "Стратегии выхода на международные рынки." },
-          { id: 6, name: "Алия Нуртаева", role: "Финансовый Аудит", desc: "Подготовка к Due Diligence." },
-          { id: 7, name: "Руслан Ким", role: "Tech Скаутинг", desc: "Поиск инновационных решений и стартапов." }
-        ];
-
-        const INITIAL_LESSONS = Array.from({ length: 10 }, (_, i) => ({
-          id: i + 1,
-          title: `Урок ${i + 1}: ${['Введение в инкубацию', 'Анализ рынка', 'Unit-экономика', 'MVP и CustDev', 'Финансовая модель', 'Юридическая структура', 'Маркетинг и продажи', 'Подготовка Pitch Deck', 'Работа с инвесторами', 'Масштабирование'][i]}`,
-          desc: "Подробное описание методологии, практические задания и чек-листы для подготовки вашего проекта к инвестициям.",
-          dayRequired: i, 
-        }));
-
-        // --- MAIN APP COMPONENT ---
-        function App() {
-          const [currentRoute, setCurrentRoute] = useState('home'); 
-          const [user, setUser] = useState(null); 
-          const [isMenuOpen, setIsMenuOpen] = useState(false);
-          const [checkoutModal, setCheckoutModal] = useState({ isOpen: false, type: 'course' }); 
-
-          const [lessons, setLessons] = useState(INITIAL_LESSONS);
-          const [usersDb, setUsersDb] = useState([]);
-          const [metrics, setMetrics] = useState({ revenueCourse: 0, revenueCorrection: 0 });
-
-          const navigate = (route) => {
-            setCurrentRoute(route);
-            setIsMenuOpen(false);
-            window.scrollTo(0, 0);
-          };
-
-          // Подгружаем пользователей для админки из PythonAnywhere
-          useEffect(() => {
-            if (currentRoute === 'admin') {
-               fetch(`${API_URL}/api/users`).then(r => r.json()).then(setUsersDb).catch(e => console.error(e));
-            }
-          }, [currentRoute]);
-
-          const handleLoginSuccess = (email, phone, type) => {
-            const isAdmin = email === 'admin@catalyst.kz';
-            const newUser = {
-              id: Math.floor(Math.random() * 1000),
-              email,
-              phone,
-              role: isAdmin ? 'admin' : 'student',
-              daysActive: 0,
-              progress: 0,
-              hasCertificate: false,
-              regDate: new Date().toISOString().split('T')[0],
-              status: 'paid'
-            };
-
-            setUser(newUser);
-            navigate(isAdmin ? 'admin' : 'lms');
-            setCheckoutModal({ isOpen: false, type: 'course' });
-          };
-
-          const handleLogout = () => {
-            setUser(null);
-            navigate('home');
-          };
-
-          return (
-            <div className="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
-              <header className="bg-[#0f172a] text-white sticky top-0 z-40 shadow-md">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="flex justify-between items-center h-20">
-                    <div className="flex items-center cursor-pointer" onClick={() => navigate('home')}>
-                      <div className="w-10 h-10 bg-yellow-600 rounded flex items-center justify-center mr-3 font-bold text-xl">C</div>
-                      <div>
-                        <h1 className="text-xl font-bold tracking-tight">CATALYST</h1>
-                        <p className="text-xs text-slate-400 uppercase tracking-widest leading-none mt-1">Consulting</p>
-                      </div>
-                    </div>
+            return (
+                <div className="min-h-screen flex flex-col">
                     
-                    <nav className="hidden md:flex space-x-8 items-center">
-                      {currentRoute === 'home' && (
-                        <>
-                          <a href="#about" className="text-sm font-medium hover:text-yellow-500 transition-colors">Об инкубации</a>
-                          <a href="#experts" className="text-sm font-medium hover:text-yellow-500 transition-colors">Академия экспертов</a>
-                          <a href="#program" className="text-sm font-medium hover:text-yellow-500 transition-colors">Программа</a>
-                        </>
-                      )}
-                      {user ? (
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm text-slate-300">{user.email}</span>
-                          <button onClick={() => navigate(user.role === 'admin' ? 'admin' : 'lms')} className="text-sm font-medium bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded transition">Кабинет</button>
-                          <button onClick={handleLogout} className="text-slate-400 hover:text-white"><LogOut size={20} /></button>
+                    {/* --- 1. ШАПКА --- */}
+                    <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#0f172a] border-b-2 border-white/5 h-24">
+                        <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-[#facc15] rounded-xl flex items-center justify-center font-black text-2xl text-[#0f172a]">C</div>
+                                <div className="flex flex-col leading-none font-black uppercase">
+                                    <span className="text-xl text-white tracking-tighter">Catalyst</span>
+                                    <span className="text-[10px] text-[#facc15] tracking-[0.3em]">Consult</span>
+                                </div>
+                            </div>
+
+                            <div className="hidden lg:flex items-center gap-10">
+                                <a href="#about" className="nav-link">О нас</a>
+                                <a href="#services" className="nav-link">Услуги и стоимость</a>
+                                <a href="#program" className="nav-link">Программы</a>
+                                <a href="#academy" className="nav-link">Академия экспертов</a>
+                            </div>
+
+                            <div className="flex items-center gap-6">
+                                <a href="https://wa.me/77053638505" target="_blank" className="btn-primary px-8 py-4 rounded-xl">
+                                    НАПИСАТЬ <i className="fab fa-whatsapp ml-2 text-xl"></i>
+                                </a>
+                            </div>
                         </div>
-                      ) : (
-                        <button onClick={() => setCheckoutModal({ isOpen: true, type: 'course' })} className="bg-yellow-600 hover:bg-yellow-500 text-white px-6 py-2.5 rounded text-sm font-bold shadow-lg transition-all">Пройти инкубацию (10 000 ₸)</button>
-                      )}
                     </nav>
 
-                    <div className="md:hidden flex items-center">
-                      <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-slate-300 hover:text-white">
-                        {isMenuOpen ? <X /> : <Menu />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </header>
+                    <main className="pt-24">
+                        {/* --- 2. HERO БЛОК --- */}
+                        <section className="max-w-7xl mx-auto px-6 py-24 lg:py-40 flex flex-col lg:flex-row gap-20 items-center">
+                            <div className="lg:w-3/5 space-y-10">
+                                <div className="inline-block px-4 py-1.5 bg-white/5 text-[#facc15] rounded-full text-[11px] font-black tracking-[0.3em] uppercase border border-white/10">Премиум консалтинг</div>
+                                <h1 className="text-5xl lg:text-[5.5rem] header-bold leading-[1.05] text-white">
+                                    Экспертное <br/> сопровождение <br/>
+                                    <span className="text-slate-500">проектов.</span>
+                                </h1>
+                                <p className="text-slate-400 text-2xl max-w-2xl leading-relaxed body-regular italic">
+                                    Комплексная подготовка вашего бизнеса к привлечению инвестиций на уровне стандартов НИХ «Байтерек». Практическая программа от топ-менеджеров рынка.
+                                </p>
+                            </div>
+                            <div className="lg:w-2/5 w-full">
+                                <div className="glass-card p-12 shadow-2xl relative border-l-[10px] border-l-[#facc15]">
+                                    <h2 className="text-3xl font-black uppercase mb-2 text-white header-bold">Бизнес-инкубация 0→1</h2>
+                                    <p className="text-[12px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-12">Для Qazinnovations</p>
+                                    <div className="text-7xl price-text mb-12">10 000 <span className="text-[#facc15] text-3xl uppercase tracking-normal">₸</span></div>
+                                    <button onClick={() => setModal('intro')} className="w-full btn-primary py-7 rounded-2xl text-lg">
+                                        ПОЛУЧИТЬ СЕРТИФИКАТ
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
 
-              {isMenuOpen && (
-                <div className="md:hidden bg-[#0f172a] text-white absolute top-20 left-0 w-full z-30 shadow-xl border-t border-slate-800 p-4">
-                  <div className="flex flex-col space-y-4">
-                     {!user && (
-                         <button onClick={() => { setCheckoutModal({ isOpen: true, type: 'course' }); setIsMenuOpen(false); }} className="bg-yellow-600 w-full py-3 rounded font-bold text-center">Войти / Купить курс</button>
-                     )}
-                     {user && (
-                         <>
-                            <button onClick={() => navigate(user.role === 'admin' ? 'admin' : 'lms')} className="bg-slate-800 w-full py-3 rounded font-bold text-center">Мой кабинет</button>
-                            <button onClick={handleLogout} className="text-slate-400 py-2 text-center">Выйти</button>
-                         </>
-                     )}
-                  </div>
-                </div>
-              )}
+                        {/* --- 3. О НАС --- */}
+                        <section id="about" className="bg-white text-slate-900 py-32">
+                            <div className="max-w-7xl mx-auto px-6">
+                                <div className="mb-24 space-y-8 max-w-5xl">
+                                    <h2 className="text-sm font-black uppercase tracking-[0.5em] text-[#ca8a04] border-b-4 border-[#facc15] inline-block pb-2">О НАС: Catalyst Consult</h2>
+                                    <p className="text-3xl lg:text-5xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.1]">Catalyst Consult - это специализированная инвестиционная экосистема и экспертный катализатор.</p>
+                                    <p className="text-xl text-slate-500 body-regular italic leading-relaxed">Мы трансформируем бизнес-инициативы в структурированные инвестиционные активы, обеспечивая привлечение капитала для проектов стоимостью от 100 млн тенге.</p>
+                                </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+                                    <div className="space-y-10">
+                                        <h3 className="text-2xl font-black uppercase text-[#0f172a]">Методология «7 экспертов»</h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {["MBA-стратег", "Финансовый аналитик", "Комплаенс-юрист", "Data-аналитик", "Маркетолог-стратег", "Бухгалтер-аудитор", "Инвестиционный скаут"].map((e, i) => (
+                                                <div key={i} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 text-[12px] body-regular uppercase tracking-tight">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-black text-[10px]">{i+1}</div>
+                                                    <b className="text-slate-900">{e}</b>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="p-12 bg-[#0f172a] rounded-[3rem] text-white flex flex-col justify-center shadow-2xl relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-600/10 rounded-full blur-[80px]"></div>
+                                        <p className="text-xl font-medium leading-relaxed italic opacity-90">"Наша миссия: Переводить амбиции бизнеса на язык цифр и законов, понятный государству и частным инвесторам."</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-              <main className="flex-grow flex flex-col">
-                {currentRoute === 'home' && <LandingPage setCheckoutModal={setCheckoutModal} lessons={lessons} />}
-                {currentRoute === 'lms' && user?.role === 'student' && <StudentLMS user={user} setUser={setUser} lessons={lessons} setCheckoutModal={setCheckoutModal} />}
-                {currentRoute === 'admin' && user?.role === 'admin' && <AdminPanel metrics={metrics} users={usersDb} lessons={lessons} />}
-                {currentRoute === 'offer' && <PublicOfferPage onBack={() => navigate('home')} />}
-                {currentRoute === 'privacy' && <PrivacyPolicyPage onBack={() => navigate('home')} />}
-              </main>
+                        {/* --- 4. УСЛУГИ И СТОИМОСТЬ --- */}
+                        <section id="services" className="bg-slate-50 text-slate-900 py-32 border-y border-slate-200">
+                            <div className="max-w-7xl mx-auto px-6 text-center">
+                                <h2 className="text-[16px] font-black uppercase tracking-[0.5em] text-[#ca8a04] mb-20 border-b-2 border-[#facc15] inline-block pb-2">2. УСЛУГИ И СТОИМОСТЬ</h2>
+                                <div className="overflow-hidden rounded-[3rem] border border-slate-200 shadow-2xl bg-white">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-[#0f172a] text-[12px] font-black uppercase text-white tracking-[0.3em]">
+                                            <tr><th className="p-10">Категория</th><th className="p-10">Услуга / Суть</th><th className="p-10 text-right">Стоимость</th></tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 text-sm font-medium uppercase tracking-tight text-slate-600">
+                                            {[
+                                                ["Инновации", "Бизнес-инкубация (Обучение + Сертификат)", "10 000 KZT"],
+                                                ["Скоринг", "Light-Скоринг (10 мин. экспресс-анализ)", "10 000 KZT"],
+                                                ["Аудит", "Zoom-Аудит (30 мин. детальный разбор)", "50 000 KZT"],
+                                                ["Консалтинг", "Deep-Консультация (1 час глубокого аудита 7 экспертами)", "100 000 KZT"],
+                                                ["Обучение", "Практикум «3 простых шага к инвестиции»", "500 000 KZT"],
+                                                ["Упаковка", "Scale-up МСБ (Полная упаковка)", "1 500 000 KZT"],
+                                                ["Крупный чек", "Бизнес-план ГП (Байтерек, БРК, Даму)", "от 10 000 000 KZT"]
+                                            ].map((r, i) => (
+                                                <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="p-10 text-[#ca8a04] font-black text-[15px]">{r[0]}</td>
+                                                    <td className="p-10 text-[#0f172a]">{r[1]}</td>
+                                                    <td className="p-10 text-right font-black text-xl text-slate-900">{r[2]}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
 
-              <footer className="bg-[#0f172a] text-slate-400 py-8 border-t border-slate-800 mt-auto">
-                <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-sm">
-                  <p>© 2026 ТОО «ADAM LABS». БИН 220440012697. Все права защищены.</p>
-                  <div className="flex space-x-4 mt-4 md:mt-0">
-                    <button onClick={() => navigate('offer')} className="hover:text-white transition-colors">Публичная оферта</button>
-                    <button onClick={() => navigate('privacy')} className="hover:text-white transition-colors">Политика конфиденциальности</button>
-                  </div>
-                </div>
-              </footer>
+                        {/* --- 5. ПРОГРАММА ПРАКТИКУМА --- */}
+                        <section id="program" className="bg-white text-slate-900 py-32">
+                            <div className="max-w-4xl mx-auto px-6">
+                                <div className="calendar-note p-12 lg:p-20 relative overflow-hidden">
+                                    <div className="absolute top-0 right-10 text-slate-100 text-[14rem] font-black select-none pointer-events-none uppercase leading-none">15 АПР</div>
+                                    <div className="relative z-10 space-y-12">
+                                        <div className="inline-block px-5 py-2 bg-[#facc15] text-[#0f172a] rounded-lg font-black text-[11px] uppercase tracking-widest shadow-lg">Напоминание о событии</div>
+                                        <h2 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.05]">3 простых шага <br/> к инвестиции</h2>
+                                        <div className="flex flex-wrap gap-x-16 gap-y-10 py-12 border-y border-slate-100 text-[#0f172a]">
+                                            <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Формат</p><p className="font-black text-3xl uppercase tracking-tighter">Алматы</p></div>
+                                            <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Статус</p><p className="font-black text-3xl uppercase tracking-tighter">Оффлайн</p></div>
+                                            <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Цена</p><p className="font-black text-3xl uppercase tracking-tighter text-[#ca8a04]">500 000 ₸</p></div>
+                                        </div>
+                                        <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em]">16 модулей • Интенсив с 10:00 до 19:00 • Раздаточные материалы</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-              {checkoutModal.isOpen && <CheckoutFlow API_URL={API_URL} type={checkoutModal.type} onClose={() => setCheckoutModal({ isOpen: false, type: 'course' })} onSuccess={handleLoginSuccess} />}
-            </div>
-          );
-        }
+                        {/* --- 6. АКАДЕМИЯ ЭКСПЕРТОВ --- */}
+                        <section id="academy" className="bg-[#0f172a] text-white py-32 relative border-t border-white/5">
+                            <div className="max-w-7xl mx-auto px-6">
+                                <h2 className="text-4xl lg:text-6xl header-bold mb-20 underline decoration-[#facc15] decoration-[12px] underline-offset-[16px]">Программа обучение экспертов</h2>
+                                
+                                <div className="grid lg:grid-cols-12 gap-20 items-start">
+                                    <div className="lg:col-span-7 space-y-20">
+                                        {[
+                                            { t: "1. Юридическая база (НПА)", d: "Эксперт обязан знать НПА: «Правила грантового финансирования инноваций», Бюджетный кодекс и регламенты обжалования." },
+                                            { t: "2. Механизмы взаимодействия", d: "Работа с цифровыми платформами (Qoldau, Gosagro, Damu.online). Ошибка в цифре — автоматический отказ без права апелляции." },
+                                            { t: "3. Инвестиционный аудит", d: "Проверка целевого назначения («Экономика простых вещей») и коэффициент долговой нагрузки (DCCR)." }
+                                        ].map((item, i) => (
+                                            <div key={i}>
+                                                <h3 className="text-3xl font-black uppercase mb-6 tracking-tight text-white">{item.t}</h3>
+                                                <p className="text-slate-400 text-lg body-regular italic leading-relaxed">{item.d}</p>
+                                            </div>
+                                        ))}
 
-        // --- LANDING PAGE ---
-        function LandingPage({ setCheckoutModal, lessons }) {
-          const [openAccordion, setOpenAccordion] = useState(0);
-          return (
-            <div className="w-full">
-              <section className="bg-[#0f172a] text-white pt-20 pb-32 relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-yellow-600/10 rounded-full blur-3xl"></div>
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col md:flex-row items-center">
-                  <div className="md:w-3/5 pr-8">
-                    <div className="inline-block px-3 py-1 bg-slate-800 text-yellow-500 rounded-full text-xs font-semibold tracking-wider mb-6 border border-slate-700">ПРЕМИУМ КОНСАЛТИНГ</div>
-                    <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6">Catalyst Consult — <br/><span className="text-slate-300 font-light">экспертное сопровождение</span> инвестиционных проектов.</h1>
-                    <p className="text-lg text-slate-400 mb-10 max-w-2xl leading-relaxed">Комплексная подготовка вашего бизнеса к привлечению инвестиций на уровне стандартов НИХ «Байтерек». Практическая программа от топ-менеджеров рынка.</p>
-                    <button onClick={() => setCheckoutModal({ isOpen: true, type: 'course' })} className="bg-yellow-600 hover:bg-yellow-500 text-white px-8 py-4 rounded font-bold text-lg shadow-lg flex items-center justify-center transition-all">Пройти инкубацию (10 000 ₸) <i className="fas fa-chevron-right ml-2"></i></button>
-                  </div>
-                  <div className="md:w-2/5 mt-16 md:mt-0">
-                    <div className="bg-slate-800/50 border border-slate-700 p-8 rounded-xl backdrop-blur-sm text-center">
-                      <div className="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center mb-6 shadow-lg"><span className="text-[#0f172a] font-extrabold text-2xl">SDU</span></div>
-                      <h3 className="text-xl font-bold mb-2">Академический партнер</h3>
-                      <p className="text-slate-400 text-sm">Программа разработана совместно с экспертами SDU University по заказу НАРИ АО QazInnovations.</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
+                                        <div className="bg-white/5 p-10 rounded-[2.5rem] border border-white/10 mt-16">
+                                            <h4 className="text-xl font-black uppercase mb-8 text-[#facc15]">Структура программы (НПА)</h4>
+                                            <div className="space-y-6 text-sm body-regular">
+                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">I. НПА и Регуляторика</b> <span>Законы РК, промышленная политика.</span></div>
+                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">II. Регламент</b> <span>Алгоритм от подачи до мониторинга.</span></div>
+                                                <div className="flex justify-between border-b border-white/10 pb-4"><b className="text-white uppercase italic">III. Специфика</b> <span>Детальный разбор условий фондов.</span></div>
+                                                <div className="flex justify-between"><b className="text-white uppercase italic">IV. Комплаенс</b> <span>Гарантия прохождения СБ банков.</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-              <section id="experts" className="py-24 bg-slate-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                  <h2 className="text-3xl md:text-4xl font-bold text-[#0f172a] mb-4 uppercase tracking-widest opacity-40">Коллегия экспертов</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 text-left">
-                    {EXPERTS.map(expert => (
-                      <div key={expert.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition">
-                        <div className="w-12 h-12 bg-slate-100 rounded-full mb-4 flex items-center justify-center text-slate-400"><Users /></div>
-                        <h3 className="font-bold text-lg text-[#0f172a]">{expert.name}</h3>
-                        <p className="text-yellow-600 font-bold text-[10px] mb-3 uppercase">{expert.role}</p>
-                        <p className="text-slate-500 text-sm leading-relaxed">{expert.desc}</p>
-                      </div>
-                    ))}
-                    <div className="bg-[#0f172a] p-6 rounded-xl shadow-sm border border-slate-800 flex flex-col justify-center text-white">
-                        <ShieldCheck size={40} className="text-yellow-500 mb-4" />
-                        <h3 className="font-bold text-lg mb-2">Высший стандарт</h3>
-                        <p className="text-slate-400 text-xs">Проекты оцениваются по критериям institutional investors.</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
+                                    <div className="lg:col-span-5 bg-white text-slate-900 p-12 rounded-[3.5rem] shadow-2xl lg:sticky lg:top-36">
+                                        <p className="text-[12px] font-black uppercase text-slate-400 tracking-widest mb-4">Стоимость обучения</p>
+                                        <div className="text-7xl font-black mb-12 tracking-tighter text-[#0f172a]">500 000 <span className="text-2xl uppercase">₸</span></div>
+                                        <button onClick={() => setModal('partner')} className="w-full btn-primary py-7 rounded-2xl">
+                                            ОТПРАВИТЬ ЗАЯВКУ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-              <section id="program" className="py-24 bg-white border-t">
-                <div className="max-w-4xl mx-auto px-4">
-                  <h2 className="text-3xl font-bold text-[#0f172a] mb-12 text-center uppercase tracking-widest opacity-40">Программа обучения</h2>
-                  <div className="space-y-4">
-                    {lessons.map((lesson, idx) => (
-                      <div key={lesson.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                        <button onClick={() => setOpenAccordion(openAccordion === idx ? null : idx)} className="w-full px-8 py-6 flex justify-between items-center bg-slate-50 hover:bg-slate-100 transition text-left font-bold text-[#0f172a]">
-                          {lesson.title} {openAccordion === idx ? <ChevronDown /> : <ChevronRight />}
-                        </button>
-                        {openAccordion === idx && <div className="px-8 py-6 bg-white text-slate-600 border-t flex items-start"><PlayCircle className="text-yellow-600 mr-4 mt-1" size={24} /><p className="leading-relaxed">{lesson.desc}</p></div>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            </div>
-          );
-        }
+                        {/* --- 7. ФУТЕР --- */}
+                        <footer className="bg-[#0f172a] border-t border-white/10 py-20">
+                            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
+                                <div className="text-center md:text-left space-y-2">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white">© 2026 ТОО «ADAM LABS». БИН 220440012697.</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Все права защищены.</p>
+                                </div>
+                                <div className="flex gap-10 text-[11px] font-black uppercase tracking-[0.3em]">
+                                    <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
+                                    <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Конфиденциальность</a>
+                                </div>
+                                <div className="flex gap-6 text-2xl text-white">
+                                    <a href="https://www.instagram.com/catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fab fa-instagram"></i></a>
+                                    <a href="https://www.threads.com/@catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fa-brands fa-threads"></i></a>
+                                </div>
+                            </div>
+                        </footer>
+                    </main>
 
-        // --- CHECKOUT FLOW (CONNECTED К PYTHONANYWHERE) ---
-        function CheckoutFlow({ API_URL, type, onClose, onSuccess }) {
-          const [step, setStep] = useState(1);
-          const [email, setEmail] = useState('');
-          const [phone, setPhone] = useState('');
-          
-          const handlePay = async (e) => {
-            e.preventDefault();
-            setStep(2);
-            try {
-              const res = await fetch(`${API_URL}/api/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, phone })
-              });
-              const data = await res.json();
-              if (data.success || res.status === 400) {
-                 setTimeout(() => onSuccess(email, phone, type), 1500);
-              } else {
-                 alert("Ошибка: " + data.message);
-                 setStep(1);
-              }
-            } catch (err) {
-               alert("Сервер не отвечает!");
-               setStep(1);
-            }
-          };
+                    {/* --- МОДАЛЬНЫЕ ОКНА --- */}
+                    {modal !== 'none' && (
+                        <div className="fixed inset-0 z-[200] modal-blur flex items-center justify-center p-4">
+                            
+                            {/* 1. ИНТРО */}
+                            {modal === 'intro' && (
+                                <div className="bg-white text-slate-900 w-full max-w-2xl rounded-[3rem] p-12 shadow-2xl relative">
+                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
+                                    <h3 className="text-3xl font-black uppercase text-center mb-10 tracking-tighter">Программа инкубации <span className="text-[#ca8a04] italic">0→1</span></h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] font-black uppercase mb-10">
+                                        {["1. Введение", "2. Анализ рынка", "3. Unit-экономика", "4. MVP и CustDev", "5. Финмодель", "6. Юрструктура", "7. Маркетинг", "8. Pitch Deck", "9. Инвесторы", "10. Масштабирование"].map((m, i) => (
+                                            <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3"><i className="fas fa-play text-[#ca8a04]"></i> {m}</div>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => setModal('reg')} className="w-full btn-primary py-6 rounded-2xl">Купить и начать</button>
+                                </div>
+                            )}
 
-          return (
-            <div className="fixed inset-0 bg-[#0f172a]/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-[3rem] w-full max-w-md overflow-hidden shadow-2xl p-12 text-slate-900">
-                {step === 1 ? (
-                  <form onSubmit={handlePay} className="space-y-6">
-                    <h3 className="text-3xl font-black mb-8 tracking-tighter">Вход в кабинет</h3>
-                    <input type="email" placeholder="EMAIL" className="w-full p-5 bg-slate-50 border rounded-2xl font-bold uppercase outline-none focus:ring-4 focus:ring-yellow-500/20" onChange={e => setEmail(e.target.value)} required />
-                    <input type="tel" placeholder="ТЕЛЕФОН" className="w-full p-5 bg-slate-50 border rounded-2xl font-bold uppercase" onChange={e => setPhone(e.target.value)} required />
-                    <button type="submit" className="w-full bg-[#0f172a] text-white py-5 rounded-2xl font-black text-lg shadow-lg hover:bg-slate-800 transition">ОПЛАТИТЬ И ВОЙТИ</button>
-                    <button type="button" onClick={onClose} className="w-full text-slate-400 text-[10px] font-bold uppercase tracking-widest">Назад</button>
-                  </form>
-                ) : (
-                  <div className="text-center py-10">
-                    <RefreshCcw className="mx-auto text-yellow-600 mb-6" size={48} />
-                    <h3 className="font-bold text-xl mb-2 tracking-tighter uppercase">Проверка доступа...</h3>
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Связываемся с PythonAnywhere</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        }
+                            {/* 2. РЕГИСТРАЦИЯ */}
+                            {modal === 'reg' && (
+                                <div className="bg-white text-slate-900 w-full max-w-xl rounded-[3rem] p-12 shadow-2xl relative">
+                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
+                                    <form onSubmit={(e) => { e.preventDefault(); localStorage.setItem('catalyst_project_name', e.target.projectName.value); setModal('pay'); }} className="space-y-5">
+                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8 italic">Регистрация</h3>
+                                        <input type="email" placeholder="EMAIL" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100" required/>
+                                        <input type="tel" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100" required/>
+                                        <input name="projectName" type="text" placeholder="НАИМЕНОВАНИЕ ПРОЕКТА" className="w-full bg-slate-50 p-6 rounded-2xl font-black uppercase text-xs border-2 border-red-200" required/>
+                                        <button type="submit" className="w-full btn-primary py-6 rounded-2xl">Далее</button>
+                                    </form>
+                                </div>
+                            )}
 
-        // --- STUDENT LMS ---
-        function StudentLMS({ user, setUser, lessons }) {
-          const [activeTab, setActiveTab] = useState('courses');
-          const [sel, setSel] = useState(lessons[0]);
-          const [playing, setPlaying] = useState(false);
-          const [prog, setProg] = useState(0);
+                            {/* 3. ОПЛАТА */}
+                            {modal === 'pay' && (
+                                <div className="bg-white text-slate-900 w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl relative text-center">
+                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
+                                    <div className="text-7xl font-black text-[#ca8a04] mb-10 tracking-tighter">10 000 ₸</div>
+                                    <label className="flex items-start gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100 cursor-pointer text-left mb-10">
+                                        <input type="checkbox" onChange={e => setAgreed(e.target.checked)} className="mt-1 accent-[#ca8a04] w-5 h-5" />
+                                        <span className="text-[11px] font-bold text-slate-500 uppercase leading-relaxed italic">Я согласен с Договором оферты и Политикой конфиденциальности.</span>
+                                    </label>
+                                    <div className="space-y-4">
+                                        <button disabled={!agreed} onClick={() => window.location.href='cabinet.html'} className="w-full py-6 border-2 border-red-500 text-red-600 rounded-2xl font-black uppercase text-[12px] disabled:opacity-30 hover:bg-red-50 transition-colors">Оплатить Kaspi.kz</button>
+                                        <button disabled={!agreed} onClick={() => window.location.href='cabinet.html'} className="w-full py-6 border-2 border-green-600 text-green-700 rounded-2xl font-black uppercase text-[12px] disabled:opacity-30 hover:bg-green-50 transition-colors">Оплатить Halyk</button>
+                                    </div>
+                                </div>
+                            )}
 
-          useEffect(() => { setPlaying(false); setProg(0); }, [sel.id]);
-          useEffect(() => {
-            if (playing && prog < 100) {
-              const itv = setInterval(() => setProg(p => {
-                if (p >= 100) { 
-                  if (user.progress < sel.id) setUser(u => ({...u, progress: sel.id}));
-                  setPlaying(false); return 100; 
-                }
-                return p + 25; 
-              }), 1000);
-              return () => clearInterval(itv);
-            }
-          }, [playing, prog]);
+                            {/* 4. ЗАЯВКА ПАРТНЕРА */}
+                            {modal === 'partner' && (
+                                <div className="bg-white text-slate-900 w-full max-w-xl rounded-[3rem] p-12 shadow-2xl relative">
+                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
+                                    <form action="https://formspree.io/f/info@catalyst-consult.kz" method="POST" className="space-y-6">
+                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8 italic">Стать партнером</h3>
+                                        <input type="text" name="name" placeholder="ФИО ПОЛНОСТЬЮ" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100 focus:border-[#ca8a04]" required/>
+                                        <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100 focus:border-[#ca8a04]" required/>
+                                        <select name="role" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100 cursor-pointer appearance-none">
+                                            <option value="">ВЫБЕРИТЕ ПРОГРАММУ</option>
+                                            <option value="scout">ИНВЕСТИЦИОННЫЙ СКАУТ</option>
+                                            <option value="expert">ЭКСПЕРТ-АНАЛИТИК</option>
+                                            <option value="partner">ГЕНЕРАЛЬНЫЙ ПАРТНЕР</option>
+                                        </select>
+                                        <button type="submit" className="w-full btn-primary py-7 rounded-2xl">Отправить заявку</button>
+                                    </form>
+                                </div>
+                            )}
 
-          return (
-            <div className="flex-grow flex bg-slate-50">
-              <div className="w-64 bg-white border-r hidden md:flex flex-col p-8 space-y-3">
-                <h2 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-6">Навигация</h2>
-                <button onClick={() => setActiveTab('courses')} className={`w-full flex items-center px-5 py-3 rounded-xl text-xs font-bold transition ${activeTab === 'courses' ? 'bg-[#0f172a] text-white shadow-xl' : 'text-slate-500 hover:bg-slate-50'}`}><BookOpen size={16} className="mr-3" /> Мои курсы</button>
-                <button onClick={() => setActiveTab('certs')} className={`w-full flex items-center px-5 py-3 rounded-xl text-xs font-bold transition ${activeTab === 'certs' ? 'bg-[#0f172a] text-white shadow-xl' : 'text-slate-500 hover:bg-slate-50'}`}><Award size={16} className="mr-3" /> Сертификаты</button>
-                
-                <div className="mt-12 p-6 bg-purple-50 rounded-2xl border border-purple-200">
-                    <p className="text-[10px] font-black text-purple-700 uppercase mb-3">Демо-панель:</p>
-                    <button onClick={() => setUser({...user, daysActive: user.daysActive + 1})} className="w-full bg-white border border-purple-300 text-purple-700 py-2 rounded-lg text-[10px] font-bold mb-2 shadow-sm">+1 День</button>
-                    <button onClick={() => setUser({...user, daysActive: 10})} className="w-full bg-purple-600 text-white py-2 rounded-lg text-[10px] font-bold">Открыть всё</button>
-                </div>
-              </div>
-              
-              <div className="flex-1 p-10">
-                {activeTab === 'courses' && (
-                  <div className="flex flex-col lg:flex-row gap-12">
-                    <div className="flex-1">
-                      <div className="aspect-video bg-black rounded-[3rem] mb-10 flex items-center justify-center relative shadow-2xl overflow-hidden border border-white/10 group">
-                        {sel.dayRequired > user.daysActive ? (
-                            <div className="text-center text-slate-600"><Lock size={64} className="opacity-20 mb-4 mx-auto" /><p className="font-bold text-[10px] uppercase">Урок доступен через {sel.dayRequired - user.daysActive} дн.</p></div>
-                        ) : playing ? (
-                            <div className="w-1/2 bg-slate-800 h-1 rounded-full overflow-hidden"><div className="bg-yellow-500 h-full transition-all duration-1000" style={{width:prog+'%'}}></div></div>
-                        ) : user.progress >= sel.id ? (
-                            <div className="text-center text-green-500"><CheckCircle size={64} className="mb-4 mx-auto" /><p className="font-black uppercase tracking-widest text-sm">Урок просмотрен</p></div>
-                        ) : (
-                            <button onClick={()=>setPlaying(true)} className="hover:scale-110 transition"><PlayCircle size={80} className="text-white opacity-80" /></button>
-                        )}
-                      </div>
-                      <h2 className="text-3xl font-black mb-6 uppercase underline decoration-yellow-500 decoration-8 underline-offset-8">{sel.title}</h2>
-                      <p className="text-slate-500 leading-relaxed font-medium text-lg">{sel.desc}</p>
-                    </div>
-                    
-                    <div className="w-full lg:w-80 space-y-2">
-                       <h3 className="font-black mb-8 text-slate-300 uppercase text-[10px] tracking-widest px-4">Программа инкубации:</h3>
-                       {lessons.map(l => (
-                         <button key={l.id} disabled={l.dayRequired > user.daysActive} onClick={() => setSel(l)} className={`w-full text-left p-6 rounded-[2rem] flex items-center gap-4 transition shadow-sm ${sel.id === l.id ? 'bg-white text-[#0f172a] shadow-2xl scale-105' : 'bg-slate-900 border border-white/5 text-slate-400 hover:bg-slate-800'} ${l.dayRequired > user.daysActive ? 'opacity-30 cursor-not-allowed' : ''}`}>
-                            {l.dayRequired > user.daysActive ? <Lock size={14} /> : user.progress >= l.id ? <CheckCircle size={14} className="text-green-500" /> : <PlayCircle size={14} />}
-                            <span className="text-[10px] font-black uppercase tracking-tighter">{l.title}</span>
-                         </button>
-                       ))}
-                    </div>
-                  </div>
-                )}
-                {activeTab === 'certs' && <div className="bg-white p-20 rounded-[4rem] shadow-2xl border text-center"><i className="fas fa-file-alt text-7xl text-slate-100 mb-8"></i><h2 className="text-3xl font-black text-[#0f172a] mb-4 uppercase tracking-tighter">Документов пока нет</h2><p className="text-slate-400 font-medium">Пройдите все уроки для автоматического выпуска сертификата QazInnovations.</p></div>}
-              </div>
-            </div>
-          );
-        }
-
-        // --- ADMIN PANEL ---
-        function AdminPanel({ metrics, users }) {
-          return (
-            <div className="p-10 max-w-7xl mx-auto text-slate-900">
-              <h1 className="text-6xl font-black mb-16 uppercase tracking-tighter text-[#0f172a]">CRM БАЗА</h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                <div className="bg-white p-12 rounded-[4rem] shadow-xl border border-slate-100"><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4 opacity-50">Общая выручка</p><p className="text-6xl font-black text-[#0f172a]">{(users.length * 10000).toLocaleString('ru-RU')} ₸</p></div>
-                <div className="bg-white p-12 rounded-[4rem] shadow-xl border border-slate-100"><p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4 opacity-50">Учеников в базе</p><p className="text-6xl font-black text-[#0f172a]">{users.length} чел.</p></div>
-              </div>
-              <div className="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-slate-100">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-50 border-b text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]"><tr className="p-8"><th className="p-10">Email / ТЕЛ</th><th className="p-10">СТАТУС</th><th className="p-10 text-center">ПРОГРЕСС</th></tr></thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {users.map(u => (
-                      <tr key={u.id} className="hover:bg-slate-50 transition"><td className="p-10"><div className="font-black text-xl text-[#0f172a] tracking-tight">{u.email}</div><div className="text-[10px] text-slate-400 font-bold uppercase mt-1">{u.phone}</div></td><td className="p-10"><span className="bg-green-100 text-green-700 px-5 py-2 rounded-full text-[10px] font-black uppercase shadow-sm border border-green-200">Оплачено</span></td><td className="p-10 text-center font-bold text-slate-300 text-xs tracking-widest uppercase">{u.progress} / 10 Уроков</td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        }
-
-        // --- ДОКУМЕНТЫ ---
-        function PublicOfferPage({ onBack }) {
-          return (
-            <div className="max-w-4xl mx-auto py-20 px-4 text-slate-900">
-              <button onClick={onBack} className="mb-10 text-slate-400 font-bold flex items-center hover:text-[#0f172a] transition"><ArrowLeft size={16} className="mr-2" /> На главную</button>
-              <div className="bg-white p-20 rounded-[5rem] shadow-2xl border border-slate-100 leading-relaxed font-medium">
-                <h1 className="text-4xl font-black mb-16 uppercase tracking-tighter text-[#0f172a] text-center">Публичная оферта</h1>
-                <p className="mb-8 font-black text-xl text-[#0f172a] uppercase tracking-tight">ТОО «ЦЕНТР РАЗВИТИЯ И РОСТА ЧЕЛОВЕЧЕСКИХ РЕСУРСОВ «ADAM LABS». БИН 220440012697.</p>
-                <p className="text-slate-600 text-lg">Настоящим подтверждается порядок оказания консультационных услуг на платформе Catalyst Consult. Материалы предоставляются после полной оплаты. Все права защищены.</p>
-              </div>
-            </div>
-          );
-        }
-
-        function PrivacyPolicyPage({ onBack }) {
-            return (
-                <div className="max-w-4xl mx-auto py-20 px-4 text-slate-900">
-                    <button onClick={onBack} className="mb-10 text-slate-400 font-bold flex items-center hover:text-[#0f172a] transition"><ArrowLeft size={16} className="mr-2" /> На главную</button>
-                    <div className="bg-white p-20 rounded-[5rem] shadow-2xl border border-slate-100 leading-relaxed font-medium">
-                        <h1 className="text-4xl font-black mb-16 uppercase tracking-tighter text-[#0f172a] text-center">Политика конфиденциальности</h1>
-                        <p className="text-slate-600 text-lg leading-loose">Мы серьезно относимся к защите ваших персональных данных. Платформа Catalyst Consult использует данные только для обеспечения доступа к образовательным материалам. ТОО «ADAM LABS» соблюдает законы РК о персональных данных.</p>
-                    </div>
+                        </div>
+                    )}
                 </div>
             );
-        }
+        };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
