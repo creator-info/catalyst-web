@@ -3,48 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalyst Consult — Экспертное сопровождение</title>
+    
+    <title>Catalyst Consult — Экспертное сопровождение проектов</title>
+    <meta name="description" content="Комплексная подготовка бизнеса к инвестициям. Программа инкубации совместно с SDU Extension Center.">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://catalyst-consult.kz/">
+    <meta property="og:title" content="Catalyst Consult — Экспертное сопровождение">
+    <meta property="og:description" content="Трансформируем бизнес-инициативы в инвестиционные активы.">
+    <meta property="og:image" content="https://catalyst-consult.kz/image_98e027.jpg">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
-        
         body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; scroll-behavior: smooth; }
-        
-        .nav-link { color: #ffffff !important; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; transition: color 0.3s; }
-        .nav-link:hover { color: #facc15 !important; }
-
-        .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 2.5rem; }
-        
-        .header-bold { font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
-        .body-regular { font-weight: 400; color: #94a3b8; }
-        .price-text { font-weight: 900; letter-spacing: -2px; color: #ffffff; }
-        
-        .calendar-note { background: #ffffff; color: #0f172a; border-left: 12px solid #facc15; border-radius: 2.5rem; box-shadow: 0 40px 80px -15px rgba(0,0,0,0.5); }
-        
-        .modal-blur { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); }
-        
-        .btn-primary { background-color: #facc15; color: #0f172a; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
-        .btn-primary:hover:not(:disabled) { background-color: #eab308; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.3); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        .error-hint { color: #ef4444; font-size: 10px; font-weight: 800; margin-top: 6px; text-transform: uppercase; text-align: left; }
-        
-        .tooltip-alert {
-            position: absolute; bottom: 100%; left: 0; right: 0;
-            background: #ef4444; color: white; padding: 12px; border-radius: 12px;
-            font-size: 10px; font-weight: 900; text-transform: uppercase;
-            margin-bottom: 10px; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
-            z-index: 50; animation: bounce 0.5s infinite alternate; text-align: left;
-        }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+        /* ... твой существующий CSS ... */
     </style>
 </head>
 <body>
@@ -451,12 +429,12 @@
                         <footer className="bg-[#0f172a] border-t border-white/10 py-20">
                             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
                                 {/* Блок 1: Реквизиты */}
-                                <div className="space-y-2 text-center md:text-left">
-                                    <div className="text-xl font-black text-white tracking-tighter mb-4">CATALYST CONSULT</div>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white">© 2026 ТОО «ADAM LABS».</p>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white">БИН 220440012697.</p>
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500 mt-2">Все права защищены.</p>
-                                </div>
+                                <div className="flex flex-col gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-center md:text-right mb-6">
+    {/* Теперь ссылки будут работать на новом домене автоматически */}
+    <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
+    <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Политика конфиденциальности</a>
+    {/* Пользовательское соглашение удалено, как ты и просила */}
+</div>
                                 
                                 {/* Блок 2: Контакты */}
                                 <div className="space-y-4 text-center">
