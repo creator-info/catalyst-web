@@ -28,7 +28,8 @@
         .modal-blur { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); }
         
         .btn-primary { background-color: #facc15; color: #0f172a; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
-        .btn-primary:hover { background-color: #eab308; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.3); }
+        .btn-primary:hover:not(:disabled) { background-color: #eab308; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.3); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -70,6 +71,7 @@
             const [agreed, setAgreed] = useState(false);
             const [showTooltip, setShowTooltip] = useState(false);
             const [loading, setLoading] = useState(false);
+            const [submitSuccess, setSubmitSuccess] = useState(false);
             
             // Данные формы
             const [formData, setFormData] = useState({
@@ -77,37 +79,89 @@
             });
 
             const [errors, setErrors] = useState({ email: '', bin: '' });
+            const [touched, setTouched] = useState({ email: false, bin: false });
 
+            // --- ЗАДАЧА 1: УМНАЯ ВАЛИДАЦИЯ EMAIL ---
             const validateEmail = (email) => {
-                const lower = email.toLowerCase();
-                if (lower.includes('gmail.ru')) return 'ОШИБКА: GMAIL ДОЛЖЕН БЫТЬ .COM';
-                if (lower.includes('mail.com')) return 'ОШИБКА: MAIL ДОЛЖЕН БЫТЬ .RU';
-                if ((email.match(/@/g) || []).length > 1) return 'ОШИБКА: ДВА СИМВОЛА @';
-                if (email.includes('2') && !email.includes('@')) return 'ОШИБКА: ВОЗМОЖНО ВЫ НАЖАЛИ "2" ВМЕСТО "@"';
+                const lower = email.toLowerCase().trim();
+                if (!lower) return ''; // Пустое поле не валидируем до onBlur
+
+                if (!lower.includes('@')) {
+                    if (lower.includes('2')) return 'ОШИБКА: ВОЗМОЖНО ВЫ НАЖАЛИ "2" ВМЕСТО "@"';
+                    return 'ОШИБКА: ОТСУТСТВУЕТ СИМВОЛ "@"';
+                }
+                
+                if ((lower.match(/@/g) || []).length > 1) return 'ОШИБКА: ДВА СИМВОЛА "@" В АДРЕСЕ';
+                
+                if (lower.includes('gmail')) {
+                    if (!lower.endsWith('.com')) return 'ОШИБКА: ДЛЯ GMAIL ИСПОЛЬЗУЙТЕ ОКОНЧАНИЕ .COM';
+                }
+                
+                if (lower.includes('mail')) {
+                    if (lower.endsWith('.com')) return 'ОШИБКА: ДЛЯ MAIL.RU ИСПОЛЬЗУЙТЕ ОКОНЧАНИЕ .RU';
+                }
+                
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!re.test(lower)) return 'ОШИБКА: НЕВЕРНЫЙ ФОРМАТ ПОЧТЫ';
+                
                 return '';
+            };
+
+            const handleBlur = (e) => {
+                const { name, value } = e.target;
+                setTouched(prev => ({ ...prev, [name]: true }));
+                
+                if (name === 'email') {
+                    setErrors(prev => ({ ...prev, email: validateEmail(value) }));
+                }
             };
 
             const handleChange = (e) => {
                 const { name, value } = e.target;
                 let val = value;
                 
+                // --- ЗАДАЧА 2: ВАЛИДАЦИЯ БИН/ИИН (строго 12 цифр, без букв) ---
                 if (name === 'bin') {
-                    val = value.replace(/\D/g, '').slice(0, 12); // только цифры, макс 12
-                    setErrors(prev => ({ ...prev, bin: val.length > 0 && val.length !== 12 ? 'БИН ДОЛЖЕН БЫТЬ РОВНО 12 ЦИФР' : '' }));
+                    val = value.replace(/\D/g, '').slice(0, 12); 
+                    if (touched.bin || val.length === 12) {
+                        setErrors(prev => ({ 
+                            ...prev, 
+                            bin: val.length > 0 && val.length !== 12 ? 'ДОЛЖНО БЫТЬ РОВНО 12 ЦИФР' : '' 
+                        }));
+                    }
                 }
                 
-                if (name === 'email') {
+                if (name === 'email' && touched.email) {
                     setErrors(prev => ({ ...prev, email: validateEmail(val) }));
                 }
 
                 setFormData(prev => ({ ...prev, [name]: val }));
             };
 
+            // Проверка валидности формы для разблокировки кнопок
+            const isFormValid = 
+                agreed && 
+                formData.email && 
+                !validateEmail(formData.email) && 
+                formData.bin.length === 12 && 
+                formData.projectName.trim() !== '' && 
+                formData.company.trim() !== '' &&
+                formData.phone.trim() !== '';
+
+            // --- ЗАДАЧА 5: ИНТЕГРАЦИЯ С GOOGLE SHEETS ---
             const handleSubmitToGoogle = async (e, paymentMethod) => {
                 e.preventDefault();
-                if (errors.email || errors.bin || !agreed || formData.bin.length !== 12) return;
+                
+                // Финальная проверка перед отправкой (на всякий случай)
+                const emailErr = validateEmail(formData.email);
+                if (emailErr || formData.bin.length !== 12 || !agreed) {
+                    setErrors({ email: emailErr, bin: formData.bin.length !== 12 ? 'ДОЛЖНО БЫТЬ РОВНО 12 ЦИФР' : '' });
+                    setTouched({ email: true, bin: true });
+                    return;
+                }
 
                 setLoading(true);
+                
                 // ТВОЯ РАБОЧАЯ ССЫЛКА GOOGLE APPS SCRIPT
                 const scriptUrl = "https://script.google.com/macros/s/AKfycbwboNc87jb7d0yaGNmZrhBfcFvb5oHopaIpv7311bcIX0IroyEjcNJKvm-DWVvtt7yc/exec";
                 
@@ -129,13 +183,16 @@
                         body: dataToSend.toString()
                     });
                     
-                    // Показываем сообщение об успехе и закрываем модалку
-                    alert("Заявка успешно принята! Мы проверим данные и выставим вам счет. Ожидайте уведомления.");
-                    setModal('none');
-                    setAgreed(false);
-                    setFormData({ email: '', phone: '', company: '', bin: '', projectName: '', bank: 'Kaspi' });
+                    setSubmitSuccess(true);
+                    setTimeout(() => {
+                        setModal('none');
+                        setSubmitSuccess(false);
+                        setAgreed(false);
+                        setFormData({ email: '', phone: '', company: '', bin: '', projectName: '', bank: 'Kaspi' });
+                        setTouched({ email: false, bin: false });
+                    }, 4000);
                 } catch (error) {
-                    alert("Произошла ошибка при отправке заявки. Пожалуйста, напишите нам на WhatsApp.");
+                    alert("Произошла ошибка при отправке заявки. Пожалуйста, напишите нам на WhatsApp: +7 705 363 85 05.");
                 } finally {
                     setLoading(false);
                 }
@@ -144,7 +201,7 @@
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* --- 1. ШАПКА (НАВИГАЦИЯ) --- */}
+                    {/* --- ШАПКА (НАВИГАЦИЯ) --- */}
                     <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#0f172a] border-b-2 border-white/5 h-24">
                         <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
                             <div className="flex items-center gap-4">
@@ -171,12 +228,13 @@
                     </nav>
 
                     <main className="pt-24">
-                        {/* --- 2. HERO БЛОК --- */}
+                        {/* --- HERO БЛОК --- */}
                         <section className="max-w-7xl mx-auto px-6 py-24 lg:py-40 flex flex-col lg:flex-row gap-20 items-center">
                             <div className="lg:w-3/5 space-y-10">
                                 <div className="inline-block px-4 py-1.5 bg-white/5 text-[#facc15] rounded-full text-[11px] font-black tracking-[0.3em] uppercase border border-white/10">Премиум консалтинг</div>
                                 <h1 className="text-5xl lg:text-[5.5rem] header-bold leading-[1.05] text-white">
                                     Экспертное <br/> сопровождение <br/>
+
                                     <span className="text-slate-500">проектов.</span>
                                 </h1>
                                 <p className="text-slate-400 text-2xl max-w-2xl leading-relaxed body-regular italic">
@@ -195,7 +253,7 @@
                             </div>
                         </section>
 
-                        {/* --- 3. О НАС --- */}
+                        {/* --- ЗАДАЧА 2: РАЗДЕЛ "О НАС" И СПИКЕРЫ --- */}
                         <section id="about" className="bg-white text-slate-900 py-32">
                             <div className="max-w-7xl mx-auto px-6">
                                 <div className="mb-24 space-y-8 max-w-5xl">
@@ -203,6 +261,47 @@
                                     <p className="text-3xl lg:text-5xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.5]">Catalyst Consult - это специализированная инвестиционная экосистема и экспертный катализатор.</p>
                                     <p className="text-xl text-slate-500 body-regular italic leading-relaxed">Мы трансформируем бизнес-инициативы в структурированные инвестиционные активы, обеспечивая привлечение капитала для проектов стоимостью от 100 млн тенге.</p>
                                 </div>
+                                
+                                {/* Блок Экспертов (Айжан и Алишер) */}
+                                <div className="mb-32">
+                                    <h3 className="text-3xl font-black uppercase text-[#0f172a] mb-12 border-l-8 border-[#facc15] pl-6">Наши Эксперты</h3>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                        {/* Спикер 1: Айжан Берікқызы */}
+                                        <div className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 shadow-lg relative overflow-hidden group hover:shadow-2xl transition-all">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#facc15]/20 rounded-bl-[100px] z-0 transition-transform group-hover:scale-110"></div>
+                                            <div className="flex items-center gap-6 mb-8 relative z-10">
+                                                <div className="w-24 h-24 rounded-full bg-[#0f172a] flex items-center justify-center text-white text-3xl font-black shadow-xl border-4 border-white">АБ</div>
+                                                <div>
+                                                    <h4 className="text-2xl font-black uppercase text-[#0f172a] tracking-tight">Айжан Берікқызы</h4>
+                                                    <p className="text-sm font-bold uppercase text-[#ca8a04] tracking-widest mt-1">Основатель и Визионер</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4 text-sm text-slate-600 leading-relaxed relative z-10">
+                                                <p><b>Основатель Catalyst Consult.</b> Сертифицированный бизнес-тренер (НПП Атамекен), лектор (Университет СДУ, НИШ ФМН).</p>
+                                                <p><b>Глубокая экспертиза:</b> Стратегическое управление, инновации и предпринимательство. Специализируется на разработке грантовых заявок, бизнес-планов и коммерциализации технологий (QazInnovations, Фонд Науки).</p>
+                                                <p><b>Регалии:</b> Руководитель проектов на сумму свыше <b>1,5 млрд тенге</b> (Коммерциализация технологий, 2023-2025).</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Спикер 2: Алишер Тажинов */}
+                                        <div className="bg-[#0f172a] p-10 rounded-[3rem] border border-slate-800 shadow-xl relative overflow-hidden group hover:shadow-2xl transition-all">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-[100px] z-0 transition-transform group-hover:scale-110"></div>
+                                            <div className="flex items-center gap-6 mb-8 relative z-10">
+                                                <div className="w-24 h-24 rounded-full bg-[#facc15] flex items-center justify-center text-[#0f172a] text-3xl font-black shadow-xl border-4 border-[#0f172a]">АТ</div>
+                                                <div>
+                                                    <h4 className="text-2xl font-black uppercase text-white tracking-tight">Алишер Тажинов</h4>
+                                                    <p className="text-sm font-bold uppercase text-slate-400 tracking-widest mt-1">Финансовый Архитектор</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4 text-sm text-slate-300 leading-relaxed relative z-10">
+                                                <p><b>Сертифицированный финансовый аналитик (CFA), ACCA.</b> Эксперт с 10-летним стажем в инвестиционном банкинге и корпоративных финансах.</p>
+                                                <p><b>Глубокая экспертиза:</b> Финансовое моделирование, оценка стоимости бизнеса (Valuation), M&A сделки, структурирование сделок (Term Sheet).</p>
+                                                <p><b>Регалии:</b> Сопровождение сделок M&A на сумму более <b>$50 млн</b>. Автор методологии скоринга инвестиционных проектов Catalyst Consult.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
                                     <div className="space-y-10">
                                         <h3 className="text-2xl font-black uppercase text-[#0f172a]">Методология «7 экспертов»</h3>
@@ -217,18 +316,29 @@
                                     </div>
                                     <div className="p-12 bg-[#0f172a] rounded-[3rem] text-white flex flex-col justify-center shadow-2xl relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-600/10 rounded-full blur-[80px]"></div>
-                                        <p className="text-xl font-medium leading-relaxed italic opacity-90">"Наша миссия: Переводить амбиции бизнеса на язык цифр и законов, понятный государству и частным инвесторам."</p>
+                                        <p className="text-xl font-medium leading-relaxed italic opacity-90 relative z-10">"Наша миссия: Переводить амбиции бизнеса на язык цифр и законов, понятный государству и частным инвесторам."</p>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* --- 4. УСЛУГИ И СТОИМОСТЬ --- */}
+                        {/* --- ЗАДАЧА 4: НЕЗАВИСИМАЯ МЕДИА-ГАЛЕРЕЯ (Секция на главной) --- */}
+                        <section className="bg-slate-100 py-24 border-y border-slate-200">
+                            <div className="max-w-4xl mx-auto px-6 text-center">
+                                <h2 className="text-4xl font-black uppercase tracking-tighter text-[#0f172a] mb-6">Достижения и регалии</h2>
+                                <p className="text-lg text-slate-500 mb-10 max-w-2xl mx-auto">Ознакомьтесь с сертификатами наших экспертов, официальными благодарностями и фотоотчетами с наших практикумов и обучающих программ.</p>
+                                <a href="gallery.html" className="inline-block bg-[#0f172a] text-[#facc15] font-black px-10 py-5 rounded-2xl text-sm uppercase tracking-widest hover:bg-slate-800 hover:scale-105 transition-all shadow-xl">
+                                    ОТКРЫТЬ ФОТОГАЛЕРЕЮ И СЕРТИФИКАТЫ <i className="fas fa-arrow-right ml-2"></i>
+                                </a>
+                            </div>
+                        </section>
+
+                        {/* --- УСЛУГИ И СТОИМОСТЬ --- */}
                         <section id="services" className="bg-slate-50 text-slate-900 py-32 border-y border-slate-200">
                             <div className="max-w-7xl mx-auto px-6 text-center">
                                 <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter text-[#0f172a] mb-16">2. УСЛУГИ И СТОИМОСТЬ</h2>
-                                <div className="overflow-hidden rounded-[3rem] border border-slate-200 shadow-2xl bg-white">
-                                    <table className="w-full text-left">
+                                <div className="overflow-x-auto rounded-[3rem] border border-slate-200 shadow-2xl bg-white">
+                                    <table className="w-full text-left min-w-[800px]">
                                         <thead className="bg-[#0f172a] text-[12px] font-black uppercase text-white tracking-[0.3em]">
                                             <tr><th className="p-10">Категория</th><th className="p-10">Услуга / Суть</th><th className="p-10 text-right">Стоимость</th></tr>
                                         </thead>
@@ -243,9 +353,9 @@
                                                 ["Крупный чек", "Бизнес-план ГП (Байтерек, БРК, Даму)", "от 10 000 000 KZT"]
                                             ].map((r, i) => (
                                                 <tr key={i} className="hover:bg-slate-50 transition-colors group">
-                                                    <td className="p-10 text-[#ca8a04] font-black text-[15px]">{r[0]}</td>
+                                                    <td className="p-10 text-[#ca8a04] font-black text-[15px] whitespace-nowrap">{r[0]}</td>
                                                     <td className="p-10 text-[#0f172a]">{r[1]}</td>
-                                                    <td className="p-10 text-right font-black text-xl">
+                                                    <td className="p-10 text-right font-black text-xl whitespace-nowrap">
                                                         <a href={`https://wa.me/77053638505?text=Здравствуйте! Интересует услуга: ${r[1]}`} target="_blank" className="text-slate-900 group-hover:text-green-600 transition-colors inline-flex items-center justify-end gap-3 w-full">
                                                             {r[2]} <i className="fab fa-whatsapp text-green-500 opacity-30 group-hover:opacity-100 transition-all transform group-hover:scale-110"></i>
                                                         </a>
@@ -258,11 +368,11 @@
                             </div>
                         </section>
 
-                        {/* --- 5. ПРОГРАММА ПРАКТИКУМА --- */}
+                        {/* --- ПРОГРАММА ПРАКТИКУМА --- */}
                         <section id="program" className="bg-white text-slate-900 py-32">
                             <div className="max-w-5xl mx-auto px-6">
                                 <div className="calendar-note p-12 lg:p-20 relative overflow-hidden">
-                                    <div className="absolute top-0 right-10 text-slate-100 text-[14rem] font-black select-none pointer-events-none uppercase leading-none">15 АПР</div>
+                                    <div className="absolute top-0 right-10 text-slate-100 text-[10rem] lg:text-[14rem] font-black select-none pointer-events-none uppercase leading-none">15 АПР</div>
                                     <div className="relative z-10 space-y-10">
                                         <div className="inline-block px-5 py-2 bg-[#facc15] text-[#0f172a] rounded-lg font-black text-[11px] uppercase tracking-widest shadow-lg">Напоминание о событии</div>
                                         <h2 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.05]">3 простых шага <br/> к инвестиции</h2>
@@ -294,7 +404,7 @@
                             </div>
                         </section>
 
-                        {/* --- 6. АКАДЕМИЯ ЭКСПЕРТОВ --- */}
+                        {/* --- АКАДЕМИЯ ЭКСПЕРТОВ --- */}
                         <section id="academy" className="bg-[#0f172a] text-white py-32 relative border-t border-white/5">
                             <div className="max-w-7xl mx-auto px-6">
                                 <h2 className="text-4xl lg:text-6xl header-bold mb-20 underline decoration-[#facc15] decoration-[12px] underline-offset-[16px]">Программа обучение экспертов</h2>
@@ -334,21 +444,35 @@
                             </div>
                         </section>
 
-                        {/* --- 7. ФУТЕР --- */}
+                        {/* --- ЗАДАЧА 5: ФУТЕР И КОНТАКТЫ (ЮРИДИЧЕСКАЯ ЧИСТОТА) --- */}
                         <footer className="bg-[#0f172a] border-t border-white/10 py-20">
-                            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
-                                <div className="text-center md:text-left space-y-2">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white">© 2026 ТОО «ADAM LABS». БИН 220440012697.</p>
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500">Все права защищены.</p>
+                            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
+                                {/* Блок 1: Реквизиты */}
+                                <div className="space-y-2 text-center md:text-left">
+                                    <div className="text-xl font-black text-white tracking-tighter mb-4">CATALYST CONSULT</div>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white">© 2026 ТОО «ADAM LABS».</p>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white">БИН 220440012697.</p>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-slate-500 mt-2">Все права защищены.</p>
                                 </div>
-                                <div className="flex gap-10 text-[11px] font-black uppercase tracking-[0.3em]">
-                                    <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
-                                    <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Конфиденциальность</a>
-                                    <a href="agreement.html" className="text-white hover:text-[#facc15] transition-colors">Пользовательское соглашение</a>
+                                
+                                {/* Блок 2: Контакты */}
+                                <div className="space-y-4 text-center">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#facc15]">Контакты</p>
+                                    <p className="text-sm text-slate-300">A15E3B3, г. Алматы, Бостандыкский р-н,<br/>пр. Аль-Фараби, зд. 17/1.</p>
+                                    <p className="text-sm text-white font-bold hover:text-[#facc15] transition-colors"><a href="mailto:info@catalyst-consult.kz">info@catalyst-consult.kz</a></p>
+                                    <p className="text-sm text-white font-bold"><a href="https://wa.me/77053638505" className="hover:text-[#facc15] transition-colors">WhatsApp / Telegram: +7 705 363 85 05</a></p>
                                 </div>
-                                <div className="flex gap-6 text-2xl text-white">
-                                    <a href="https://www.instagram.com/catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fab fa-instagram"></i></a>
-                                    <a href="https://www.threads.com/@catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fa-brands fa-threads"></i></a>
+
+                                {/* Блок 3: Документы и Соцсети (Удалено Пользовательское соглашение) */}
+                                <div className="flex flex-col items-center md:items-end justify-between">
+                                    <div className="flex flex-col gap-3 text-[11px] font-black uppercase tracking-[0.2em] text-center md:text-right mb-6">
+                                        <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
+                                        <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Политика конфиденциальности</a>
+                                    </div>
+                                    <div className="flex gap-6 text-2xl text-white">
+                                        <a href="https://www.instagram.com/catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fab fa-instagram"></i></a>
+                                        <a href="https://www.threads.com/@catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fa-brands fa-threads"></i></a>
+                                    </div>
                                 </div>
                             </div>
                         </footer>
@@ -366,12 +490,19 @@
                                     <h3 className="text-3xl lg:text-4xl font-black uppercase text-center mb-8 tracking-tighter">Программа инкубации <span className="text-[#ca8a04]">0→1</span></h3>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                                        <div className="bg-[#0f172a] p-6 rounded-3xl text-white shadow-lg">
-                                            <div className="flex items-center gap-4 mb-3">
-                                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-[#0f172a] text-[10px] shrink-0">SDU</div>
-                                                <p className="text-[10px] font-black text-[#facc15] uppercase tracking-[0.2em] leading-tight">Академический партнер</p>
+                                        {/* ЗАДАЧА 3: ИНТЕГРАЦИЯ ЛОГОТИПА SDU */}
+                                        <div className="bg-[#0f172a] p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                                            <div className="flex items-center gap-4 mb-4 relative z-10">
+                                                {/* Интегрирован реальный логотип SDU Extension Center */}
+                                                <div className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-black">
+                                                    <img src="image_98e027.jpg" alt="SDU Extension Center" className="w-full h-full object-contain" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-[#facc15] uppercase tracking-[0.2em] leading-tight">Академический партнер</p>
+                                                    <p className="font-bold text-sm tracking-tight">SDU Extension Center</p>
+                                                </div>
                                             </div>
-                                            <p className="text-xs font-medium opacity-90 leading-relaxed">Официальная программа подготовки проектов, разработанная совместно с экспертами <b>SDU University</b> по спецзаказу <b>НАРИ АО Qazinnovations</b>.</p>
+                                            <p className="text-xs font-medium opacity-90 leading-relaxed relative z-10 border-t border-white/20 pt-4">Официальная программа подготовки проектов, разработанная совместно с экспертами университета по спецзаказу <b>НАРИ АО Qazinnovations</b>.</p>
                                         </div>
                                         <div className="bg-red-50 border border-red-200 p-6 rounded-3xl shadow-sm flex items-center relative group">
                                             <p className="text-xs font-bold text-red-700 leading-relaxed">
@@ -379,14 +510,6 @@
                                                 <b>КРИТИЧЕСКОЕ УВЕДОМЛЕНИЕ:</b> Название проекта в выдаваемом сертификате должно <b>СТРОГО</b> соответствовать вашей заявке на грантовое финансирование!
                                             </p>
                                         </div>
-                                    </div>
-
-                                    <div className="w-full aspect-video bg-[#0f172a] rounded-[2rem] shadow-xl relative overflow-hidden flex items-center justify-center mb-10 group cursor-pointer border-4 border-slate-100">
-                                        <div className="absolute inset-0 bg-[#facc15]/10 group-hover:bg-[#facc15]/20 transition-all"></div>
-                                        <div className="w-20 h-20 bg-[#facc15] rounded-full flex items-center justify-center pl-2 shadow-[0_10px_30px_rgba(202,138,4,0.4)] transform group-hover:scale-110 transition-all">
-                                            <i className="fas fa-play text-3xl text-[#0f172a]"></i>
-                                        </div>
-                                        <span className="absolute bottom-6 left-8 text-white font-black uppercase tracking-widest text-xs opacity-70">Смотреть Введение в программу</span>
                                     </div>
 
                                     <h4 className="text-lg font-black uppercase mb-6 text-[#0f172a] text-center border-b-2 border-slate-100 pb-4">Содержание 10 модулей:</h4>
@@ -410,65 +533,87 @@
 
                             {/* 2. РЕГИСТРАЦИЯ И ОПЛАТА */}
                             {modal === 'reg' && (
-                                <div className="bg-white text-slate-900 w-full max-w-lg rounded-[3rem] p-10 relative">
+                                <div className="bg-white text-slate-900 w-full max-w-lg rounded-[3rem] p-10 relative shadow-2xl">
                                     <button onClick={() => setModal('none')} className="absolute top-6 right-6 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
                                     
-                                    <form className="space-y-4">
-                                        <h3 className="text-2xl font-black uppercase tracking-tighter text-center mb-6 italic">Оформление заявки</h3>
-                                        
-                                        <div>
-                                            <input type="email" name="email" placeholder="EMAIL" className={`w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border ${errors.email ? 'border-red-500' : 'border-slate-100'}`} value={formData.email} onChange={handleChange} required/>
-                                            {errors.email && <p className="error-hint">{errors.email}</p>}
-                                        </div>
-
-                                        <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border border-slate-100" value={formData.phone} onChange={handleChange} required/>
-                                        
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <input type="text" name="company" placeholder="КОМПАНИЯ (ТОО/ИП)" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border border-slate-100" value={formData.company} onChange={handleChange} required/>
-                                            <div>
-                                                <input type="text" name="bin" placeholder="БИН / ИИН" className={`w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border ${errors.bin ? 'border-red-500' : 'border-slate-100'}`} value={formData.bin} onChange={handleChange} required/>
-                                                {errors.bin && <p className="error-hint">{errors.bin}</p>}
+                                    {submitSuccess ? (
+                                        <div className="py-12 text-center animate-fade-in">
+                                            <div className="w-24 h-24 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                <i className="fas fa-check text-5xl"></i>
                                             </div>
+                                            <h3 className="text-3xl font-black uppercase tracking-tighter mb-4 text-[#0f172a]">ЗАЯВКА ПРИНЯТА!</h3>
+                                            <p className="text-slate-500 font-bold uppercase text-xs">Мы проверим данные и выставим вам счет. <br/> Ожидайте уведомления.</p>
                                         </div>
+                                    ) : (
+                                        <form className="space-y-4">
+                                            <h3 className="text-2xl font-black uppercase tracking-tighter text-center mb-6 italic">Оформление заявки</h3>
+                                            
+                                            <div>
+                                                {/* ЗАДАЧА 1: EMAIL ВАЛИДАЦИЯ ONBLUR */}
+                                                <input 
+                                                    type="email" name="email" placeholder="EMAIL (ОБЯЗАТЕЛЬНО .COM ДЛЯ GMAIL)" 
+                                                    className={`w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border transition-colors ${errors.email && touched.email ? 'border-red-500 bg-red-50' : 'border-slate-100 focus:border-blue-400'}`} 
+                                                    value={formData.email} onChange={handleChange} onBlur={handleBlur} required
+                                                />
+                                                {errors.email && touched.email && <p className="text-[9px] text-red-500 font-black mt-1 ml-2">{errors.email}</p>}
+                                            </div>
 
-                                        <div className="relative">
-                                            {showTooltip && (
-                                                <div className="tooltip-alert">
-                                                    Название должно строго совпадать с заявкой в QazInnovations!
+                                            <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border border-slate-100 focus:border-blue-400" value={formData.phone} onChange={handleChange} required/>
+                                            
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {/* ЗАДАЧА 3: УНИВЕРСАЛЬНЫЕ ПОЛЯ */}
+                                                <input type="text" name="company" placeholder="НАИМЕНОВАНИЕ КОМПАНИИ / ФИО" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[10px] outline-none border border-slate-100 focus:border-blue-400" value={formData.company} onChange={handleChange} required/>
+                                                <div>
+                                                    <input 
+                                                        type="text" name="bin" placeholder="БИН / ИИН (12 ЦИФР)" 
+                                                        className={`w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border transition-colors ${errors.bin && touched.bin ? 'border-red-500 bg-red-50' : 'border-slate-100 focus:border-blue-400'}`} 
+                                                        value={formData.bin} onChange={handleChange} onBlur={handleBlur} required
+                                                    />
+                                                    {errors.bin && touched.bin && <p className="text-[9px] text-red-500 font-black mt-1 ml-2">{errors.bin}</p>}
                                                 </div>
-                                            )}
-                                            <input name="projectName" type="text" placeholder="НАИМЕНОВАНИЕ ПРОЕКТА (КАК В ЗАЯВКЕ!)" 
-                                                onFocus={() => setShowTooltip(true)} onBlur={() => setShowTooltip(false)}
-                                                className="w-full bg-red-50 p-5 rounded-xl font-black uppercase text-[11px] border-2 border-red-200 focus:border-red-500 placeholder-red-400 outline-none" 
-                                                value={formData.projectName} onChange={handleChange} required/>
-                                        </div>
+                                            </div>
 
-                                        <div className="p-4 bg-slate-50 rounded-xl mt-4">
-                                            <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Выберите ваш банк:</p>
-                                            <select name="bank" className="w-full bg-transparent font-bold uppercase text-xs outline-none cursor-pointer" value={formData.bank} onChange={handleChange}>
-                                                <option value="Kaspi">Kaspi.kz</option>
-                                                <option value="Halyk">Halyk Bank</option>
-                                                <option value="Forte">Forte Bank</option>
-                                                <option value="Other">Другой / Юр. лицо</option>
-                                            </select>
-                                        </div>
+                                            <div className="relative">
+                                                {/* ЗАДАЧА 4: TOOLTIP */}
+                                                {showTooltip && (
+                                                    <div className="tooltip-alert">
+                                                        Название должно строго совпадать с заявкой в QazInnovations!
+                                                    </div>
+                                                )}
+                                                <input name="projectName" type="text" placeholder="НАИМЕНОВАНИЕ ПРОЕКТА (КАК В ЗАЯВКЕ!)" 
+                                                    onFocus={() => setShowTooltip(true)} onBlur={() => setShowTooltip(false)}
+                                                    className="w-full bg-red-50 p-5 rounded-xl font-black uppercase text-[11px] border-2 border-red-200 focus:border-red-500 placeholder-red-400 outline-none" 
+                                                    value={formData.projectName} onChange={handleChange} required/>
+                                            </div>
 
-                                        <label className="flex items-start gap-3 mt-4 cursor-pointer">
-                                            <input type="checkbox" className="mt-1 accent-[#ca8a04]" checked={agreed} onChange={e => setAgreed(e.target.checked)} />
-                                            <span className="text-[10px] text-slate-500 uppercase font-bold italic leading-relaxed">Согласен с договором оферты и политикой конфиденциальности.</span>
-                                        </label>
+                                            <div className="p-4 bg-slate-50 rounded-xl mt-4 border border-slate-100">
+                                                <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Выберите ваш банк:</p>
+                                                <select name="bank" className="w-full bg-transparent font-bold uppercase text-xs outline-none cursor-pointer" value={formData.bank} onChange={handleChange}>
+                                                    <option value="Kaspi">Kaspi.kz</option>
+                                                    <option value="Halyk">Halyk Bank</option>
+                                                    <option value="Forte">Forte Bank</option>
+                                                    <option value="Other">Другой / Юр. лицо</option>
+                                                </select>
+                                            </div>
 
-                                        <div className="grid grid-cols-1 gap-3 mt-6">
-                                            <button onClick={(e) => handleSubmitToGoogle(e, 'Удаленный счет по номеру')} disabled={loading || !agreed || !!errors.email || !!errors.bin || formData.bin.length !== 12 || !formData.email || !formData.projectName} 
-                                                className="w-full bg-[#0f172a] text-white py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-opacity">
-                                                {loading ? 'Отправка...' : 'Выставить счет по номеру (10 000 ₸)'}
-                                            </button>
-                                            <button onClick={(e) => handleSubmitToGoogle(e, 'Счет по реквизитам')} disabled={loading || !agreed || !!errors.email || !!errors.bin || formData.bin.length !== 12 || !formData.email || !formData.projectName}
-                                                className="w-full border-2 border-slate-900 py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-opacity text-slate-900 hover:bg-slate-50">
-                                                Запросить счет на юр. лицо
-                                            </button>
-                                        </div>
-                                    </form>
+                                            <label className="flex items-start gap-3 mt-4 cursor-pointer">
+                                                <input type="checkbox" className="mt-1 w-4 h-4 accent-[#ca8a04]" checked={agreed} onChange={e => setAgreed(e.target.checked)} />
+                                                <span className="text-[10px] text-slate-500 uppercase font-bold italic leading-relaxed">Согласен с договором оферты и политикой конфиденциальности.</span>
+                                            </label>
+
+                                            <div className="grid grid-cols-1 gap-3 mt-6">
+                                                {/* БЛОКИРОВКА КНОПОК ПРИ ОШИБКАХ */}
+                                                <button onClick={(e) => handleSubmitToGoogle(e, 'Удаленный счет')} disabled={loading || !isFormValid} 
+                                                    className="w-full bg-[#0f172a] text-white py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-all">
+                                                    {loading ? 'Отправка...' : 'Выставить счет по номеру (10 000 ₸)'}
+                                                </button>
+                                                <button onClick={(e) => handleSubmitToGoogle(e, 'Счет по реквизитам')} disabled={loading || !isFormValid}
+                                                    className="w-full border-2 border-slate-900 py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-all text-slate-900 hover:bg-slate-50">
+                                                    Запросить счет на юр. лицо
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
                                 </div>
                             )}
 
@@ -480,12 +625,12 @@
                                         <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8 italic">Отправить заявку</h3>
                                         <input type="text" name="name" placeholder="ФИО ПОЛНОСТЬЮ" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#ca8a04]" required/>
                                         <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#ca8a04]" required/>
-                                        <select name="role" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 cursor-pointer appearance-none">
+                                        <select name="role" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 cursor-pointer appearance-none focus:border-[#ca8a04]" required>
                                             <option value="">ВЫБЕРИТЕ ПРОГРАММУ</option>
                                             <option value="practicum">ОФФЛАЙН ПРАКТИКУМ (15 АПРЕЛЯ)</option>
                                             <option value="scout">ИНВЕСТИЦИОННЫЙ СКАУТ</option>
                                             <option value="expert">ЭКСПЕРТ-АНАЛИТИК</option>
-                                            <option value="partner">ГЕНЕРАЛЬНЫЙ ПАРТНЕР</option>
+                                            {/* ЗАДАЧА 3: Удален пункт "Генеральный партнер" */}
                                         </select>
                                         <button type="submit" className="w-full btn-primary py-7 rounded-2xl">Отправить заявку</button>
                                     </form>
