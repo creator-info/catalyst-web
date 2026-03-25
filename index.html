@@ -660,6 +660,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                                         </select>
                                         <button type="submit" className="w-full btn-primary py-7 rounded-2xl">Отправить заявку</button>
                                     </form>
+                                    <form onSubmit={handleSubmit}>
                                 </div>
                             )}
 
@@ -668,7 +669,48 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdT
                 </div>
             );
         };
+// 1. Функция управления модальным окном
+    const setModal = (isOpen) => {
+        const modal = document.getElementById('modal');
+        if (modal) {
+            if (isOpen) {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        }
+    };
 
+    // 2. Функция отправки формы
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const btn = form.querySelector('button');
+        const originalText = btn.innerText;
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuY4PI26WYMqzzTRKdTEugK6dn5qV3zFGMYtfM1W5h-y3wnLriUZ3yr99ElOZbYPTZ/exec";
+
+        btn.disabled = true;
+        btn.innerText = "ОТПРАВКА...";
+
+        try {
+            const formData = new FormData(form);
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: new URLSearchParams(formData)
+            });
+            alert("Заявка успешно принята!");
+            form.reset();
+            setModal(false);
+        } catch (error) {
+            alert("Ошибка при отправке.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    };
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
