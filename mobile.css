@@ -1,0 +1,101 @@
+/* --- КОРРЕКЦИЯ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ (mobile.css) --- */
+
+/* 1. Общие настройки экрана */
+html, body {
+    overflow-x: hidden; /* Запрещаем горизонтальную тряску сайта */
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* 2. Адаптация шапки (Навигация) */
+@media (max-width: 1024px) {
+    nav {
+        height: auto !important;
+        padding: 15px 0 !important;
+    }
+    nav .max-w-7xl {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+    .nav-link {
+        display: none !important; /* Скрываем текстовые ссылки, чтобы не забивать экран */
+    }
+}
+
+/* 3. Адаптация таблиц (Услуги и стоимость) */
+/* Обертка для таблицы в HTML должна иметь класс "table-responsive" */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1rem;
+    border-radius: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    table {
+        min-width: 650px !important; /* Не даем таблице сжиматься меньше этого значения */
+    }
+    td, th {
+        padding: 15px !important; /* Уменьшаем отступы в ячейках */
+        font-size: 12px !important;
+    }
+}
+
+/* 4. Настройка Модальных окон (Регистрация) */
+@media (max-width: 768px) {
+    .modal-blur > div {
+        width: 95% !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        padding: 20px !important;
+        border-radius: 2rem !important;
+    }
+    
+    /* Делаем поля ввода в модалке крупнее для удобства нажатия */
+    input, select {
+        font-size: 14px !important;
+        padding: 15px !important;
+    }
+    
+    /* Заголовки в модалках */
+    h3 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* 5. Главный баннер (Hero) */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2.5rem !important;
+        line-height: 1.2 !important;
+        text-align: center;
+    }
+    section {
+        padding-top: 40px !important;
+        padding-bottom: 40px !important;
+    }
+}
+
+/* 6. Плавающая кнопка WhatsApp */
+.floating-wa {
+    position: fixed;
+    bottom: 25px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #25d366;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    transition: all 0.3s ease;
+}
+
+.floating-wa:hover {
+    transform: scale(1.1);
+}
