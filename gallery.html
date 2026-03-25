@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Медиа-галерея — Catalyst Consult</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;900&display=swap');
+        body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; margin: 0; }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .media-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+            aspect-ratio: 4/3;
+        }
+
+        .media-card:hover {
+            transform: translateY(-5px);
+            border-color: #facc15;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .media-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .media-card:hover img {
+            opacity: 1;
+        }
+
+        .card-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: linear-gradient(transparent, rgba(15, 23, 42, 0.9));
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #facc15;
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            background: #facc15;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="p-6 flex justify-between items-center border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50">
+        <a href="index.html" class="btn-back">
+            <i class="fas fa-arrow-left mr-2"></i> На главную
+        </a>
+        <div class="text-right">
+            <div class="font-black text-lg leading-none uppercase">Catalyst <span class="text-[#facc15]">Media</span></div>
+        </div>
+    </nav>
+
+    <header class="max-w-7xl mx-auto px-6 py-16 text-center">
+        <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4">Фотогалерея</h1>
+        <p class="text-slate-400 max-w-2xl mx-auto font-medium uppercase text-xs tracking-[0.2em]">Награды, сертификаты и моменты с наших мероприятий</p>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pb-24">
+        <div class="gallery-grid">
+            
+            <div class="media-card group">
+                <img src="image_98e027.jpg" alt="SDU Certificate">
+                <div class="card-label">Сертификат SDU Extension Center</div>
+            </div>
+
+            <div class="media-card flex items-center justify-center bg-slate-800/50">
+                <div class="text-center p-6">
+                    <i class="fas fa-images text-3xl text-slate-700 mb-4"></i>
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Место для вашего фото</p>
+                </div>
+                <div class="card-label">Практикум Алматы 2026</div>
+            </div>
+
+            <div class="media-card flex items-center justify-center bg-slate-800/50">
+                <div class="text-center p-6">
+                    <i class="fas fa-certificate text-3xl text-slate-700 mb-4"></i>
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Лицензия / Награда</p>
+                </div>
+                <div class="card-label">Благодарственное письмо QazInnovations</div>
+            </div>
+
+        </div>
+
+        {/* Ссылка на Google Диск для удобства */}
+        <div class="mt-20 p-10 rounded-[3rem] border-2 border-dashed border-white/10 text-center">
+            <p class="text-slate-500 font-bold uppercase text-xs tracking-widest mb-6">Все материалы хранятся в облаке</p>
+            <a href="https://drive.google.com/drive/folders/1wO26jRtVLeHiHnLgFZWeyOCwPYG9f9tD" target="_blank" class="text-[#facc15] font-black underline uppercase text-sm hover:text-white transition-colors">
+                Открыть архив в Google Drive <i class="fas fa-external-link-alt ml-2"></i>
+            </a>
+        </div>
+    </main>
+
+    <footer class="py-10 border-t border-white/5 text-center">
+        <p class="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em]">Catalyst Consult • 2026</p>
+    </footer>
+
+</body>
+</html>
