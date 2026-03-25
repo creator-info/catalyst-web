@@ -1,38 +1,4 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный Кабинет — Catalyst Consult</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
-        body { font-family: 'Montserrat', sans-serif; background-color: #f8fafc; color: #0f172a; }
-        
-        /* Стили кнопок уроков (как на скриншоте) */
-        .lesson-btn { border-radius: 2rem; padding: 16px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; width: 100%; text-align: left; }
-        .lesson-active { background-color: #ffffff; color: #0f172a; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .lesson-available { background-color: #0f172a; color: #ffffff; }
-        .lesson-available:hover { background-color: #1e293b; }
-        .lesson-locked { background-color: #1e293b; color: #64748b; opacity: 0.6; cursor: not-allowed; }
-        
-        /* Скроллбар для списка уроков */
-        .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .modal-blur { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+const { useState, useEffect } = React;
 
         const LESSONS = [
             { id: 1, title: "УРОК 1: ВВЕДЕНИЕ В ИНКУБАЦИЮ", desc: "Подробное описание методологии, практические задания и чек-листы для подготовки вашего проекта к инвестициям." },
@@ -48,227 +14,127 @@
         ];
 
         const App = () => {
+            // СОСТОЯНИЯ АВТОРИЗАЦИИ
+            const [isAuth, setIsAuth] = useState(false);
+            const [loginData, setLoginData] = useState({ bin: '', email: '' });
+            const [authLoading, setAuthLoading] = useState(false);
+            const [authError, setAuthError] = useState('');
+            const [userCompany, setUserCompany] = useState('');
+
+            // СОСТОЯНИЯ КОНТЕНТА
             const [activeTab, setActiveTab] = useState('courses');
             const [selectedLesson, setSelectedLesson] = useState(0);
             const [unlockedCount, setUnlockedCount] = useState(1);
-            
             const [showTest, setShowTest] = useState(false);
             const [testPassed, setTestPassed] = useState(false);
 
-            // Логика автоматического открытия уроков (1 урок в день)
-            useEffect(() => {
-                let regDateStr = localStorage.getItem('catalyst_reg_date');
-                if (!regDateStr) {
-                    regDateStr = new Date().toISOString();
-                    localStorage.setItem('catalyst_reg_date', regDateStr);
-                }
-                
-                const regDate = new Date(regDateStr);
-                const now = new Date();
-                
-                // Считаем прошедшие дни (переход через 00:00)
-                regDate.setHours(0,0,0,0);
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                const diffTime = today - regDate;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                // Максимум 10 уроков
-                setUnlockedCount(Math.min(10, diffDays + 1));
-                
-                // Проверка: сдан ли тест ранее
-                if(localStorage.getItem('catalyst_test_passed') === 'true') {
-                    setTestPassed(true);
-                }
-            }, []);
+            // ТВОЯ НОВАЯ ССЫЛКА GOOGLE SCRIPT
+            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxqjVpRJUIlLLs95dwKAdNGyKRad8gDt1AnwwAktveXzjtYnbUVOn8RquB43o7lE_44/exec";
 
-            const handleLessonSelect = (index) => {
-                if (index < unlockedCount) {
-                    setSelectedLesson(index);
-                }
-            };
-
-            const handleTestSubmit = (e) => {
+            // Функция входа
+            const checkAuth = async (e) => {
                 e.preventDefault();
-                setTestPassed(true);
-                setShowTest(false);
-                localStorage.setItem('catalyst_test_passed', 'true');
-                setActiveTab('certificates');
+                setAuthError('');
+                
+                if (loginData.bin.length !== 12) {
+                    setAuthError('БИН должен содержать 12 цифр');
+                    return;
+                }
+
+                setAuthLoading(true);
+                try {
+                    const response = await fetch(`${SCRIPT_URL}?action=login&bin=${loginData.bin}&email=${loginData.email.toLowerCase().trim()}`);
+                    const result = await response.json();
+
+                    if (result.auth) {
+                        setIsAuth(true);
+                        setUserCompany(result.company);
+                        // Запоминаем дату входа для открытия уроков, если еще нет
+                        if(!localStorage.getItem('catalyst_reg_date')) {
+                            localStorage.setItem('catalyst_reg_date', new Date().toISOString());
+                        }
+                    } else {
+                        setAuthError('Данные не найдены. Проверьте БИН и Email или свяжитесь с поддержкой.');
+                    }
+                } catch (err) {
+                    setAuthError('Ошибка связи с сервером. Попробуйте позже.');
+                } finally {
+                    setAuthLoading(false);
+                }
             };
 
+            // Логика разблокировки уроков
+            useEffect(() => {
+                if (isAuth) {
+                    const regDateStr = localStorage.getItem('catalyst_reg_date');
+                    const regDate = new Date(regDateStr);
+                    regDate.setHours(0,0,0,0);
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    
+                    const diffTime = today - regDate;
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    setUnlockedCount(Math.min(10, diffDays + 1));
+
+                    if(localStorage.getItem('catalyst_test_passed') === 'true') {
+                        setTestPassed(true);
+                    }
+                }
+            }, [isAuth]);
+
+            // ЭКРАН ВХОДА
+            if (!isAuth) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-[#0f172a] p-6">
+                        <div className="max-w-md w-full bg-white rounded-[3rem] p-10 shadow-2xl text-center">
+                            <div className="w-16 h-16 bg-[#facc15] rounded-2xl flex items-center justify-center font-black text-2xl text-[#0f172a] mx-auto mb-6">C</div>
+                            <h2 className="text-2xl font-black uppercase text-[#0f172a] mb-8 tracking-tighter">Вход в Академию</h2>
+                            
+                            <form onSubmit={checkAuth} className="space-y-4 text-left">
+                                <div>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Ваш БИН / ИИН</label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        placeholder="123456789012"
+                                        className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl text-slate-900 outline-none focus:border-[#facc15]"
+                                        value={loginData.bin}
+                                        onChange={(e) => setLoginData({...loginData, bin: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Email (при регистрации)</label>
+                                    <input 
+                                        type="email" 
+                                        required
+                                        placeholder="example@mail.com"
+                                        className="w-full bg-slate-50 border border-slate-200 p-4 rounded-xl text-slate-900 outline-none focus:border-[#facc15]"
+                                        value={loginData.email}
+                                        onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                                    />
+                                </div>
+                                
+                                {authError && <p className="text-red-500 text-[11px] font-bold text-center px-2">{authError}</p>}
+                                
+                                <button 
+                                    type="submit" 
+                                    disabled={authLoading}
+                                    className="w-full bg-[#0f172a] text-white font-black py-4 rounded-xl hover:scale-105 transition-transform uppercase text-xs tracking-widest disabled:opacity-50"
+                                >
+                                    {authLoading ? 'ПРОВЕРКА...' : 'ВОЙТИ В КАБИНЕТ'}
+                                </button>
+                            </form>
+                            <a href="index.html" className="inline-block mt-8 text-slate-400 text-[10px] font-black uppercase hover:text-[#facc15]">Вернуться на сайт</a>
+                        </div>
+                    </div>
+                );
+            }
+
+            // ЭКРАН КАБИНЕТА (ТВОЙ ТЕКУЩИЙ КОД)
             return (
                 <div className="flex h-screen overflow-hidden bg-[#f8fafc]">
-                    
-                    {/* --- ЛЕВАЯ ПАНЕЛЬ (НАВИГАЦИЯ) --- */}
-                    <div className="w-64 bg-white shadow-[10px_0_20px_rgba(0,0,0,0.02)] flex flex-col z-20">
-                        {/* Логотип */}
-                        <div className="p-8 border-b border-slate-100 flex items-center gap-3">
-                            <div className="w-10 h-10 bg-[#facc15] rounded-xl flex items-center justify-center font-black text-xl text-[#0f172a]">C</div>
-                            <div className="flex flex-col leading-none uppercase font-black">
-                                <span className="text-lg tracking-tighter text-[#0f172a]">Catalyst</span>
-                                <span className="text-[9px] tracking-[0.2em] text-[#ca8a04] mt-1">Consult</span>
-                            </div>
-                        </div>
-
-                        {/* Меню */}
-                        <div className="p-6 flex-1">
-                            <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-6 px-4">Навигация</p>
-                            
-                            <button onClick={() => setActiveTab('courses')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors mb-2 ${activeTab === 'courses' ? 'bg-[#0f172a] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>
-                                <i className="fas fa-play-circle text-lg"></i> Мои курсы
-                            </button>
-                            
-                            <button onClick={() => setActiveTab('certificates')} className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors ${activeTab === 'certificates' ? 'bg-[#0f172a] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>
-                                <i className="fas fa-award text-lg"></i> Сертификаты
-                            </button>
-                        </div>
-
-                        {/* Выход */}
-                        <div className="p-8 border-t border-slate-100">
-                            <a href="index.html" className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors">
-                                <i className="fas fa-sign-out-alt"></i> На главную
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* --- ЦЕНТРАЛЬНАЯ ЧАСТЬ (КОНТЕНТ) --- */}
-                    <div className="flex-1 flex flex-col h-full overflow-y-auto relative">
-                        {activeTab === 'courses' ? (
-                            <div className="p-10 lg:p-16 max-w-5xl mx-auto w-full">
-                                
-                                {/* Плеер (Черный квадрат по дизайну) */}
-                                <div className="w-full aspect-[16/9] bg-black rounded-[2rem] shadow-2xl relative flex items-center justify-center mb-10 group cursor-pointer overflow-hidden">
-                                    <div className="absolute inset-0 bg-[#facc15]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <button className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-transform group-hover:scale-110">
-                                        <i className="fas fa-play text-white text-3xl ml-2"></i>
-                                    </button>
-                                </div>
-
-                                {/* Текст урока */}
-                                <div>
-                                    <h1 className="text-3xl lg:text-4xl font-black uppercase text-[#0f172a] tracking-tighter mb-4">
-                                        {LESSONS[selectedLesson].title}
-                                    </h1>
-                                    <div className="w-32 h-1.5 bg-[#facc15] mb-8 rounded-full"></div>
-                                    <p className="text-lg text-slate-500 font-medium leading-relaxed max-w-3xl">
-                                        {LESSONS[selectedLesson].desc}
-                                    </p>
-                                </div>
-
-                                {/* Кнопка Теста (появляется только на 10-м уроке) */}
-                                {selectedLesson === 9 && (
-                                    <div className="mt-16 p-10 bg-slate-50 border border-slate-200 rounded-[2.5rem] text-center">
-                                        <h3 className="text-2xl font-black uppercase text-[#0f172a] mb-4">Итоговое тестирование</h3>
-                                        <p className="text-sm text-slate-500 font-medium mb-8 max-w-xl mx-auto">Пройдите тест по всем материалам инкубации, чтобы открыть доступ к генерации официального Сертификата.</p>
-                                        
-                                        {testPassed ? (
-                                            <button onClick={() => setActiveTab('certificates')} className="bg-green-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">
-                                                Тест успешно сдан. Перейти к сертификату
-                                            </button>
-                                        ) : (
-                                            <button onClick={() => setShowTest(true)} className="bg-[#facc15] text-[#0f172a] px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#eab308] transition-transform active:scale-95">
-                                                Начать тестирование
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            /* ВКЛАДКА СЕРТИФИКАТЫ */
-                            <div className="p-10 lg:p-16 max-w-4xl mx-auto w-full">
-                                <h1 className="text-4xl font-black uppercase text-[#0f172a] tracking-tighter mb-4">Ваши Сертификаты</h1>
-                                <div className="w-32 h-1.5 bg-[#facc15] mb-12 rounded-full"></div>
-                                
-                                {!testPassed ? (
-                                    <div className="bg-white p-16 rounded-[3rem] border border-slate-200 text-center shadow-sm">
-                                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <i className="fas fa-lock text-4xl text-slate-300"></i>
-                                        </div>
-                                        <h3 className="text-2xl font-black uppercase text-slate-400 mb-4">Доступ закрыт</h3>
-                                        <p className="text-slate-500 font-medium">Для получения сертификата необходимо пройти все 10 модулей инкубации и успешно сдать итоговое тестирование.</p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-[#0f172a] p-16 rounded-[3rem] text-center shadow-2xl relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-600/20 rounded-full blur-[80px]"></div>
-                                        <i className="fas fa-award text-7xl text-[#facc15] mb-8 relative z-10"></i>
-                                        <h3 className="text-3xl font-black uppercase text-white mb-4 relative z-10">Сертификат готов!</h3>
-                                        <p className="text-slate-400 font-medium mb-10 max-w-md mx-auto relative z-10">Ваш официальный сертификат для Qazinnovations успешно сгенерирован.</p>
-                                        
-                                        {/* Ссылка на тот самый отдельный файл certificate.html */}
-                                        <a href="certificate.html" className="inline-block bg-[#facc15] text-[#0f172a] px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-[#eab308] transition-transform active:scale-95 relative z-10">
-                                            Открыть и скачать Сертификат
-                                        </a>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* --- ПРАВАЯ ПАНЕЛЬ (СПИСОК УРОКОВ) --- */}
-                    <div className="w-80 lg:w-96 bg-white border-l border-slate-100 flex flex-col z-20">
-                        <div className="p-8 border-b border-slate-100">
-                            <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest">Программа инкубации:</p>
-                        </div>
-                        
-                        <div className="p-6 flex-1 overflow-y-auto custom-scroll space-y-3">
-                            {LESSONS.map((lesson, index) => {
-                                const isUnlocked = index < unlockedCount;
-                                const isActive = index === selectedLesson;
-                                
-                                return (
-                                    <button 
-                                        key={lesson.id}
-                                        onClick={() => handleLessonSelect(index)}
-                                        disabled={!isUnlocked}
-                                        className={`lesson-btn ${isActive ? 'lesson-active' : isUnlocked ? 'lesson-available' : 'lesson-locked'}`}
-                                    >
-                                        <i className={`fas ${isActive ? 'fa-play' : isUnlocked ? 'fa-play-circle' : 'fa-lock'} text-sm shrink-0 ${isActive ? 'text-[#facc15]' : isUnlocked ? 'text-[#facc15]' : 'text-slate-500'}`}></i>
-                                        <span>{lesson.title}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* --- МОДАЛЬНОЕ ОКНО: ТЕСТ --- */}
-                    {showTest && (
-                        <div className="fixed inset-0 z-[200] modal-blur flex items-center justify-center p-4">
-                            <div className="bg-white text-slate-900 w-full max-w-2xl rounded-[3rem] p-12 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
-                                <button onClick={() => setShowTest(false)} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
-                                <h2 className="text-3xl font-black uppercase tracking-tighter mb-8 text-center text-[#0f172a]">Итоговый Тест</h2>
-                                
-                                <form onSubmit={handleTestSubmit} className="space-y-8">
-                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                        <p className="font-bold text-sm mb-4 uppercase tracking-tight">1. Что такое LTV (Lifetime Value)?</p>
-                                        <label className="flex items-center gap-3 text-sm cursor-pointer mb-3"><input type="radio" name="q1" className="accent-[#facc15] w-4 h-4" required/> Стоимость привлечения одного клиента</label>
-                                        <label className="flex items-center gap-3 text-sm cursor-pointer"><input type="radio" name="q1" className="accent-[#facc15] w-4 h-4"/> Прибыль, которую приносит клиент за все время работы с компанией</label>
-                                    </div>
-                                    
-                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                        <p className="font-bold text-sm mb-4 uppercase tracking-tight">2. Главная цель создания MVP?</p>
-                                        <label className="flex items-center gap-3 text-sm cursor-pointer mb-3"><input type="radio" name="q2" className="accent-[#facc15] w-4 h-4" required/> Быстро протестировать гипотезы с минимальными затратами</label>
-                                        <label className="flex items-center gap-3 text-sm cursor-pointer"><input type="radio" name="q2" className="accent-[#facc15] w-4 h-4"/> Создать идеальный продукт со всеми возможными функциями</label>
-                                    </div>
-
-                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                        <p className="font-bold text-sm mb-4 uppercase tracking-tight">3. Какова основная задача Pitch Deck?</p>
-                                        <label className="flex items-center gap-3 text-sm cursor-pointer mb-3"><input type="radio" name="q3" className="accent-[#facc15] w-4 h-4" required/> Заинтересовать инвестора для назначения следующей встречи</label>
-                                        <label className="flex items-center gap-3 text-sm cursor-pointer"><input type="radio" name="q3" className="accent-[#facc15] w-4 h-4"/> Показать детальный код продукта и все бухгалтерские отчеты</label>
-                                    </div>
-
-                                    <button type="submit" className="w-full bg-[#0f172a] text-white py-6 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl hover:bg-slate-800 transition-colors mt-4">
-                                        Завершить тест
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
+                    {/* ... Тут идет весь твой код, который начинается с ЛЕВАЯ ПАНЕЛЬ ... */}
+                    {/* В месте, где выводится приветствие, можешь добавить: {userCompany} */}
                 </div>
             );
         };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
