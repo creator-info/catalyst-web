@@ -22,7 +22,7 @@
         
         /* Текстовые стили */
         .header-bold { font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
-        .body-regular { font-weight: 400; color: #94a3b8; } /* Slate-400 */
+        .body-regular { font-weight: 400; color: #94a3b8; }
         .price-text { font-weight: 900; letter-spacing: -2px; color: #ffffff; }
         
         .calendar-note { background: #ffffff; color: #0f172a; border-left: 12px solid #facc15; border-radius: 2.5rem; box-shadow: 0 40px 80px -15px rgba(0,0,0,0.5); }
@@ -32,6 +32,11 @@
         /* Яркая желтая кнопка */
         .btn-primary { background-color: #facc15; color: #0f172a; font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
         .btn-primary:hover { background-color: #eab308; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.4); }
+
+        /* Скроллбар для модальных окон */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -39,6 +44,20 @@
 
     <script type="text/babel">
         const { useState } = React;
+
+        // Данные для окна Интро
+        const INCUBATION_LESSONS = [
+            { id: 1, title: "1. ВВЕДЕНИЕ В ИНКУБАЦИЮ", desc: "Подробное описание методологии, практические задания и чек-листы для подготовки вашего проекта к инвестициям." },
+            { id: 2, title: "2. АНАЛИЗ РЫНКА", desc: "Оценка объема рынка (TAM, SAM, SOM), конкурентный анализ и выявление свободных ниш." },
+            { id: 3, title: "3. UNIT-ЭКОНОМИКА", desc: "Расчет стоимости привлечения клиента (CAC), пожизненной ценности (LTV) и маржинальности." },
+            { id: 4, title: "4. MVP И CUSTDEV", desc: "Создание минимально жизнеспособного продукта и проведение глубинных интервью с пользователями." },
+            { id: 5, title: "5. ФИНАНСОВАЯ МОДЕЛЬ", desc: "Построение 3-х летней финансовой модели проекта (P&L, Cash Flow) для инвесторов." },
+            { id: 6, title: "6. ЮРИДИЧЕСКАЯ СТРУКТУРА", desc: "Регистрация интеллектуальной собственности, выбор формы (ТОО/МФЦА) и корпоративный договор." },
+            { id: 7, title: "7. МАРКЕТИНГ И ПРОДАЖИ", desc: "Построение воронки продаж, GTM-стратегия (Go-to-Market) и B2B/B2C каналы." },
+            { id: 8, title: "8. ПОДГОТОВКА PITCH DECK", desc: "Структура идеальной презентации для инвестора. Оформление слайдов и питчинг." },
+            { id: 9, title: "9. РАБОТА С ИНВЕСТОРАМИ", desc: "Где искать инвесторов, оценка проекта (Valuation) и структурирование сделки (Term Sheet)." },
+            { id: 10, title: "10. МАСШТАБИРОВАНИЕ", desc: "Стратегия выхода на международные рынки, экспорт и масштабирование команды." }
+        ];
 
         const App = () => {
             const [modal, setModal] = useState('none'); // none, intro, reg, pay, partner
@@ -103,7 +122,7 @@
                             <div className="max-w-7xl mx-auto px-6">
                                 <div className="mb-24 space-y-8 max-w-5xl">
                                     <h2 className="text-sm font-black uppercase tracking-[0.5em] text-[#ca8a04] border-b-4 border-[#facc15] inline-block pb-2">О НАС: Catalyst Consult</h2>
-                                    <p className="text-3xl lg:text-5xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.1]">Catalyst Consult - это специализированная инвестиционная экосистема и экспертный катализатор.</p>
+                                    <p className="text-3xl lg:text-5xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.5]">Catalyst Consult - это специализированная инвестиционная экосистема и экспертный катализатор.</p>
                                     <p className="text-xl text-slate-500 body-regular italic leading-relaxed">Мы трансформируем бизнес-инициативы в структурированные инвестиционные активы, обеспечивая привлечение капитала для проектов стоимостью от 100 млн тенге.</p>
                                 </div>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
@@ -129,7 +148,7 @@
                         {/* --- 4. УСЛУГИ И СТОИМОСТЬ --- */}
                         <section id="services" className="bg-slate-50 text-slate-900 py-32 border-y border-slate-200">
                             <div className="max-w-7xl mx-auto px-6 text-center">
-                                <h2 className="text-[16px] font-black uppercase tracking-[0.5em] text-[#ca8a04] mb-20 border-b-2 border-[#facc15] inline-block pb-2">2. УСЛУГИ И СТОИМОСТЬ</h2>
+                                <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter text-[#0f172a] mb-16">2. УСЛУГИ И СТОИМОСТЬ</h2>
                                 <div className="overflow-hidden rounded-[3rem] border border-slate-200 shadow-2xl bg-white">
                                     <table className="w-full text-left">
                                         <thead className="bg-[#0f172a] text-[12px] font-black uppercase text-white tracking-[0.3em]">
@@ -148,7 +167,11 @@
                                                 <tr key={i} className="hover:bg-slate-50 transition-colors">
                                                     <td className="p-10 text-[#ca8a04] font-black text-[15px]">{r[0]}</td>
                                                     <td className="p-10 text-[#0f172a]">{r[1]}</td>
-                                                    <td className="p-10 text-right font-black text-xl text-slate-900">{r[2]}</td>
+                                                    <td className="p-10 text-right font-black text-xl">
+                                                        <a href={`https://wa.me/77053638505?text=Здравствуйте! Интересует услуга: ${r[1]}`} target="_blank" className="text-slate-900 hover:text-green-600 transition-colors inline-flex items-center justify-end gap-3 group">
+                                                            {r[2]} <i className="fab fa-whatsapp text-green-500 opacity-50 group-hover:opacity-100 transition-all transform group-hover:scale-110"></i>
+                                                        </a>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -159,18 +182,37 @@
 
                         {/* --- 5. ПРОГРАММА ПРАКТИКУМА --- */}
                         <section id="program" className="bg-white text-slate-900 py-32">
-                            <div className="max-w-4xl mx-auto px-6">
+                            <div className="max-w-5xl mx-auto px-6">
                                 <div className="calendar-note p-12 lg:p-20 relative overflow-hidden">
                                     <div className="absolute top-0 right-10 text-slate-100 text-[14rem] font-black select-none pointer-events-none uppercase leading-none">15 АПР</div>
-                                    <div className="relative z-10 space-y-12">
+                                    <div className="relative z-10 space-y-10">
                                         <div className="inline-block px-5 py-2 bg-[#facc15] text-[#0f172a] rounded-lg font-black text-[11px] uppercase tracking-widest shadow-lg">Напоминание о событии</div>
                                         <h2 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-[#0f172a] leading-[1.05]">3 простых шага <br/> к инвестиции</h2>
-                                        <div className="flex flex-wrap gap-x-16 gap-y-10 py-12 border-y border-slate-100 text-[#0f172a]">
+                                        
+                                        <div className="flex flex-wrap gap-x-16 gap-y-8 py-10 border-y border-slate-100 text-[#0f172a]">
                                             <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Формат</p><p className="font-black text-3xl uppercase tracking-tighter">Алматы</p></div>
                                             <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Статус</p><p className="font-black text-3xl uppercase tracking-tighter">Оффлайн</p></div>
                                             <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Цена</p><p className="font-black text-3xl uppercase tracking-tighter text-[#ca8a04]">500 000 ₸</p></div>
                                         </div>
-                                        <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em]">16 модулей • Интенсив с 10:00 до 19:00 • Раздаточные материалы</p>
+                                        
+                                        {/* Добавлена детальная программа практикума */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-600 mb-8">
+                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                                <h4 className="font-black text-[#0f172a] uppercase mb-3"><i className="fas fa-check text-[#ca8a04] mr-2"></i>Часть 1 (Разбор проектов)</h4>
+                                                <p>Работа ведётся с реальными проектами участников. По шагам разбираются: рынок и клиент, продукт и бизнес-модель, управление, инвестиционная готовность.</p>
+                                            </div>
+                                            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                                <h4 className="font-black text-[#0f172a] uppercase mb-3"><i className="fas fa-check text-[#ca8a04] mr-2"></i>Часть 2 (Практика)</h4>
+                                                <p>Имитация переговоров с инвесторами, сбор обратной связи, понимание как выстраивать работу с капиталом. Упакованные проекты идут в пул инвесторов.</p>
+                                            </div>
+                                        </div>
+
+                                        <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mb-10">16 модулей • Интенсив с 10:00 до 19:00 • Раздаточные материалы</p>
+                                        
+                                        {/* Кнопка заявки на практикум */}
+                                        <button onClick={() => setModal('partner')} className="btn-primary py-6 px-12 rounded-2xl text-lg shadow-xl inline-block">
+                                            ОСТАВИТЬ ЗАЯВКУ
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -239,17 +281,56 @@
                     {modal !== 'none' && (
                         <div className="fixed inset-0 z-[200] modal-blur flex items-center justify-center p-4">
                             
-                            {/* 1. ИНТРО */}
+                            {/* 1. ИНТРО (Детальное описание программы инкубации) */}
                             {modal === 'intro' && (
-                                <div className="bg-white text-slate-900 w-full max-w-2xl rounded-[3rem] p-12 shadow-2xl relative">
-                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
-                                    <h3 className="text-3xl font-black uppercase text-center mb-10 tracking-tighter">Программа инкубации <span className="text-[#ca8a04] italic">0→1</span></h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[11px] font-black uppercase mb-10">
-                                        {["1. Введение", "2. Анализ рынка", "3. Unit-экономика", "4. MVP и CustDev", "5. Финмодель", "6. Юрструктура", "7. Маркетинг", "8. Pitch Deck", "9. Инвесторы", "10. Масштабирование"].map((m, i) => (
-                                            <div key={i} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3"><i className="fas fa-play text-[#ca8a04]"></i> {m}</div>
+                                <div className="bg-white text-slate-900 w-full max-w-4xl rounded-[3rem] p-10 lg:p-14 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
+                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-400 hover:text-black transition-colors"><i className="fas fa-times text-2xl"></i></button>
+                                    
+                                    <h3 className="text-3xl lg:text-4xl font-black uppercase text-center mb-8 tracking-tighter">Программа инкубации <span className="text-[#ca8a04]">0→1</span></h3>
+                                    
+                                    {/* Критическое уведомление и партнерство SDU */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                                        <div className="bg-[#0f172a] p-6 rounded-3xl text-white shadow-lg">
+                                            <div className="flex items-center gap-4 mb-3">
+                                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-[#0f172a] text-[10px] shrink-0">SDU</div>
+                                                <p className="text-[10px] font-black text-[#facc15] uppercase tracking-[0.2em] leading-tight">Академический партнер</p>
+                                            </div>
+                                            <p className="text-xs font-medium opacity-90 leading-relaxed">Официальная программа подготовки проектов, разработанная совместно с экспертами <b>SDU University</b> по спецзаказу <b>НАРИ АО Qazinnovations</b>.</p>
+                                        </div>
+                                        <div className="bg-red-50 border border-red-200 p-6 rounded-3xl shadow-sm flex items-center">
+                                            <p className="text-xs font-bold text-red-700 leading-relaxed">
+                                                <i className="fas fa-exclamation-triangle text-red-500 mr-2 text-lg"></i>
+                                                <b>КРИТИЧЕСКОЕ УВЕДОМЛЕНИЕ:</b> Название проекта в выдаваемом сертификате должно <b>СТРОГО</b> соответствовать вашей заявке на грантовое финансирование!
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Видео-заглушка для введения */}
+                                    <div className="w-full aspect-video bg-[#0f172a] rounded-[2rem] shadow-xl relative overflow-hidden flex items-center justify-center mb-10 group cursor-pointer border-4 border-slate-100">
+                                        <div className="absolute inset-0 bg-[#facc15]/10 group-hover:bg-[#facc15]/20 transition-all"></div>
+                                        <div className="w-20 h-20 bg-[#facc15] rounded-full flex items-center justify-center pl-2 shadow-[0_10px_30px_rgba(202,138,4,0.4)] transform group-hover:scale-110 transition-all">
+                                            <i className="fas fa-play text-3xl text-[#0f172a]"></i>
+                                        </div>
+                                        <span className="absolute bottom-6 left-8 text-white font-black uppercase tracking-widest text-xs opacity-70">Смотреть Введение в программу</span>
+                                    </div>
+
+                                    {/* Детальный список модулей */}
+                                    <h4 className="text-lg font-black uppercase mb-6 text-[#0f172a] text-center border-b-2 border-slate-100 pb-4">Содержание 10 модулей:</h4>
+                                    <div className="space-y-4 mb-10">
+                                        {INCUBATION_LESSONS.map((lesson, i) => (
+                                            <div key={i} className={`p-5 rounded-2xl flex flex-col md:flex-row md:items-center gap-4 border transition-colors ${i === 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-slate-200'}`}>
+                                                <div className="font-black uppercase text-sm shrink-0 md:w-1/3 flex items-center gap-3">
+                                                    <i className={`fas fa-play ${i === 0 ? 'text-[#ca8a04]' : 'text-slate-300'}`}></i> 
+                                                    <span className={i === 0 ? 'text-[#0f172a]' : 'text-slate-600'}>{lesson.title}</span>
+                                                </div>
+                                                <p className="text-xs font-medium text-slate-500 leading-relaxed md:w-2/3">
+                                                    {lesson.desc}
+                                                </p>
+                                            </div>
                                         ))}
                                     </div>
-                                    <button onClick={() => setModal('reg')} className="w-full btn-primary py-6 rounded-2xl">Купить и начать</button>
+
+                                    <button onClick={() => setModal('reg')} className="w-full btn-primary py-7 rounded-2xl text-lg shadow-2xl">ПЕРЕЙТИ К РЕГИСТРАЦИИ (10 000 ₸)</button>
                                 </div>
                             )}
 
@@ -258,11 +339,19 @@
                                 <div className="bg-white text-slate-900 w-full max-w-xl rounded-[3rem] p-12 shadow-2xl relative">
                                     <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
                                     <form onSubmit={(e) => { e.preventDefault(); localStorage.setItem('catalyst_project_name', e.target.projectName.value); setModal('pay'); }} className="space-y-5">
-                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8 italic">Регистрация</h3>
-                                        <input type="email" placeholder="EMAIL" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100" required/>
-                                        <input type="tel" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100" required/>
-                                        <input name="projectName" type="text" placeholder="НАИМЕНОВАНИЕ ПРОЕКТА" className="w-full bg-slate-50 p-6 rounded-2xl font-black uppercase text-xs border-2 border-red-200" required/>
-                                        <button type="submit" className="w-full btn-primary py-6 rounded-2xl">Далее</button>
+                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8">Регистрация</h3>
+                                        
+                                        <input type="email" placeholder="EMAIL" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
+                                        <input type="tel" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
+                                        
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input type="text" placeholder="КОМПАНИЯ (ТОО/ИП)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
+                                            <input type="text" placeholder="БИН / ИИН" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
+                                        </div>
+
+                                        <input name="projectName" type="text" placeholder="НАИМЕНОВАНИЕ ПРОЕКТА (КАК В ЗАЯВКЕ!)" className="w-full bg-red-50 p-6 rounded-2xl font-black uppercase text-xs border-2 border-red-300 focus:border-red-500 placeholder-red-400" required/>
+                                        
+                                        <button type="submit" className="w-full btn-primary py-6 rounded-2xl mt-4">Далее к оплате</button>
                                     </form>
                                 </div>
                             )}
@@ -283,16 +372,17 @@
                                 </div>
                             )}
 
-                            {/* 4. ЗАЯВКА ПАРТНЕРА */}
+                            {/* 4. ЗАЯВКА ПАРТНЕРА / ПРАКТИКУМ */}
                             {modal === 'partner' && (
                                 <div className="bg-white text-slate-900 w-full max-w-xl rounded-[3rem] p-12 shadow-2xl relative">
                                     <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
                                     <form action="https://formspree.io/f/info@catalyst-consult.kz" method="POST" className="space-y-6">
-                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8 italic">Стать партнером</h3>
-                                        <input type="text" name="name" placeholder="ФИО ПОЛНОСТЬЮ" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100 focus:border-[#ca8a04]" required/>
-                                        <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100 focus:border-[#ca8a04]" required/>
-                                        <select name="role" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-100 cursor-pointer appearance-none">
+                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8">Отправить заявку</h3>
+                                        <input type="text" name="name" placeholder="ФИО ПОЛНОСТЬЮ" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#ca8a04]" required/>
+                                        <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#ca8a04]" required/>
+                                        <select name="role" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 cursor-pointer appearance-none">
                                             <option value="">ВЫБЕРИТЕ ПРОГРАММУ</option>
+                                            <option value="practicum">ОФФЛАЙН ПРАКТИКУМ (15 АПРЕЛЯ)</option>
                                             <option value="scout">ИНВЕСТИЦИОННЫЙ СКАУТ</option>
                                             <option value="expert">ЭКСПЕРТ-АНАЛИТИК</option>
                                             <option value="partner">ГЕНЕРАЛЬНЫЙ ПАРТНЕР</option>
