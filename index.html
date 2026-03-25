@@ -125,23 +125,26 @@
                 formData.company.trim() !== '' &&
                 formData.phone.trim() !== '';
 
-            // --- ЗАДАЧА 5: ИНТЕГРАЦИЯ С GOOGLE SHEETS ---
+            // --- ЗАДАЧА 5: ИНТЕГРАЦИЯ С GOOGLE SHEETS (ОБНОВЛЕННАЯ ССЫЛКА) ---
             const handleSubmitToGoogle = async (e, paymentMethod) => {
                 e.preventDefault();
                 
-                // Финальная проверка перед отправкой (на всякий случай)
+                // Финальная проверка перед отправкой (валидация email и БИН)
                 const emailErr = validateEmail(formData.email);
                 if (emailErr || formData.bin.length !== 12 || !agreed) {
-                    setErrors({ email: emailErr, bin: formData.bin.length !== 12 ? 'ДОЛЖНО БЫТЬ РОВНО 12 ЦИФР' : '' });
-                    setTouched({ email: true, bin: true });
+                    setErrors({ 
+                        email: emailErr, 
+                        bin: formData.bin.length !== 12 ? 'ДОЛЖНО БЫТЬ РОВНО 12 ЦИФР' : '' 
+                    });
                     return;
                 }
 
                 setLoading(true);
                 
-                // ТВОЯ РАБОЧАЯ ССЫЛКА GOOGLE APPS SCRIPT
-                const scriptUrl = "https://script.google.com/macros/s/AKfycbwboNc87jb7d0yaGNmZrhBfcFvb5oHopaIpv7311bcIX0IroyEjcNJKvm-DWVvtt7yc/exec";
+                // ТВОЯ НОВАЯ ССЫЛКА GOOGLE APPS SCRIPT (ОТ 18:48)
+                const scriptUrl = "https://script.google.com/macros/s/AKfycbxZymlWlZH0_vitJiDVuWBuzam0bXOxS-4JiTbesXnLOgmk63Mw0G1EZVMw1NitdWaZ/exec";
                 
+                // Подготовка данных для отправки
                 const dataToSend = new URLSearchParams({
                     email: formData.email,
                     phone: formData.phone,
@@ -153,23 +156,30 @@
                 });
 
                 try {
+                    // Отправка данных
                     await fetch(scriptUrl, {
                         method: 'POST',
-                        mode: 'no-cors',
+                        mode: 'no-cors', // Важно для работы с Google Script
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: dataToSend.toString()
                     });
                     
+                    // Если дошли сюда — считаем отправку успешной
                     setSubmitSuccess(true);
+                    
+                    // Авто-закрытие окна через 4 секунды после успеха
                     setTimeout(() => {
                         setModal('none');
                         setSubmitSuccess(false);
                         setAgreed(false);
-                        setFormData({ email: '', phone: '', company: '', bin: '', projectName: '', bank: 'Kaspi' });
-                        setTouched({ email: false, bin: false });
+                        setFormData({ 
+                            email: '', phone: '', company: '', bin: '', projectName: '', bank: 'Kaspi' 
+                        });
+                        setErrors({ email: '', bin: '' });
                     }, 4000);
                 } catch (error) {
-                    alert("Произошла ошибка при отправке заявки. Пожалуйста, напишите нам на WhatsApp: +7 705 363 85 05.");
+                    console.error("Ошибка отправки:", error);
+                    alert("Произошла техническая ошибка. Пожалуйста, напишите нам на WhatsApp: +7 705 363 85 05.");
                 } finally {
                     setLoading(false);
                 }
