@@ -14,29 +14,36 @@
         
         body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; scroll-behavior: smooth; }
         
-        /* Крупная и очень контрастная навигация */
-        .nav-link { color: #ffffff !important; font-size: 15px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
+        .nav-link { color: #ffffff !important; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; transition: color 0.3s; }
         .nav-link:hover { color: #facc15 !important; }
 
         .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 2.5rem; }
         
-        /* Текстовые стили */
         .header-bold { font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
         .body-regular { font-weight: 400; color: #94a3b8; }
         .price-text { font-weight: 900; letter-spacing: -2px; color: #ffffff; }
         
         .calendar-note { background: #ffffff; color: #0f172a; border-left: 12px solid #facc15; border-radius: 2.5rem; box-shadow: 0 40px 80px -15px rgba(0,0,0,0.5); }
         
-        .modal-blur { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(12px); }
+        .modal-blur { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); }
         
-        /* Яркая желтая кнопка */
-        .btn-primary { background-color: #facc15; color: #0f172a; font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
-        .btn-primary:hover { background-color: #eab308; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.4); }
+        .btn-primary { background-color: #facc15; color: #0f172a; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; }
+        .btn-primary:hover { background-color: #eab308; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.3); }
 
-        /* Скроллбар для модальных окон */
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .error-hint { color: #ef4444; font-size: 10px; font-weight: 800; margin-top: 6px; text-transform: uppercase; text-align: left; }
+        
+        .tooltip-alert {
+            position: absolute; bottom: 100%; left: 0; right: 0;
+            background: #ef4444; color: white; padding: 12px; border-radius: 12px;
+            font-size: 10px; font-weight: 900; text-transform: uppercase;
+            margin-bottom: 10px; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+            z-index: 50; animation: bounce 0.5s infinite alternate; text-align: left;
+        }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
     </style>
 </head>
 <body>
@@ -45,7 +52,6 @@
     <script type="text/babel">
         const { useState } = React;
 
-        // Данные для окна Интро
         const INCUBATION_LESSONS = [
             { id: 1, title: "1. ВВЕДЕНИЕ В ИНКУБАЦИЮ", desc: "Подробное описание методологии, практические задания и чек-листы для подготовки вашего проекта к инвестициям." },
             { id: 2, title: "2. АНАЛИЗ РЫНКА", desc: "Оценка объема рынка (TAM, SAM, SOM), конкурентный анализ и выявление свободных ниш." },
@@ -60,20 +66,92 @@
         ];
 
         const App = () => {
-            const [modal, setModal] = useState('none'); // none, intro, reg, pay, partner
+            const [modal, setModal] = useState('none');
             const [agreed, setAgreed] = useState(false);
+            const [showTooltip, setShowTooltip] = useState(false);
+            const [loading, setLoading] = useState(false);
+            
+            // Данные формы
+            const [formData, setFormData] = useState({
+                email: '', phone: '', company: '', bin: '', projectName: '', bank: 'Kaspi'
+            });
+
+            const [errors, setErrors] = useState({ email: '', bin: '' });
+
+            const validateEmail = (email) => {
+                const lower = email.toLowerCase();
+                if (lower.includes('gmail.ru')) return 'ОШИБКА: GMAIL ДОЛЖЕН БЫТЬ .COM';
+                if (lower.includes('mail.com')) return 'ОШИБКА: MAIL ДОЛЖЕН БЫТЬ .RU';
+                if ((email.match(/@/g) || []).length > 1) return 'ОШИБКА: ДВА СИМВОЛА @';
+                if (email.includes('2') && !email.includes('@')) return 'ОШИБКА: ВОЗМОЖНО ВЫ НАЖАЛИ "2" ВМЕСТО "@"';
+                return '';
+            };
+
+            const handleChange = (e) => {
+                const { name, value } = e.target;
+                let val = value;
+                
+                if (name === 'bin') {
+                    val = value.replace(/\D/g, '').slice(0, 12); // только цифры, макс 12
+                    setErrors(prev => ({ ...prev, bin: val.length > 0 && val.length !== 12 ? 'БИН ДОЛЖЕН БЫТЬ РОВНО 12 ЦИФР' : '' }));
+                }
+                
+                if (name === 'email') {
+                    setErrors(prev => ({ ...prev, email: validateEmail(val) }));
+                }
+
+                setFormData(prev => ({ ...prev, [name]: val }));
+            };
+
+            const handleSubmitToGoogle = async (e, paymentMethod) => {
+                e.preventDefault();
+                if (errors.email || errors.bin || !agreed || formData.bin.length !== 12) return;
+
+                setLoading(true);
+                // ТВОЯ РАБОЧАЯ ССЫЛКА GOOGLE APPS SCRIPT
+                const scriptUrl = "https://script.google.com/macros/s/AKfycbwboNc87jb7d0yaGNmZrhBfcFvb5oHopaIpv7311bcIX0IroyEjcNJKvm-DWVvtt7yc/exec";
+                
+                const dataToSend = new URLSearchParams({
+                    email: formData.email,
+                    phone: formData.phone,
+                    company: formData.company,
+                    bin: formData.bin,
+                    projectName: formData.projectName,
+                    bank: formData.bank,
+                    paymentMethod: paymentMethod
+                });
+
+                try {
+                    await fetch(scriptUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: dataToSend.toString()
+                    });
+                    
+                    // Показываем сообщение об успехе и закрываем модалку
+                    alert("Заявка успешно принята! Мы проверим данные и выставим вам счет. Ожидайте уведомления.");
+                    setModal('none');
+                    setAgreed(false);
+                    setFormData({ email: '', phone: '', company: '', bin: '', projectName: '', bank: 'Kaspi' });
+                } catch (error) {
+                    alert("Произошла ошибка при отправке заявки. Пожалуйста, напишите нам на WhatsApp.");
+                } finally {
+                    setLoading(false);
+                }
+            };
 
             return (
                 <div className="min-h-screen flex flex-col">
                     
-                    {/* --- 1. ШАПКА --- */}
+                    {/* --- 1. ШАПКА (НАВИГАЦИЯ) --- */}
                     <nav className="fixed top-0 left-0 right-0 z-[100] bg-[#0f172a] border-b-2 border-white/5 h-24">
                         <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-[#facc15] rounded-xl flex items-center justify-center font-black text-2xl text-[#0f172a]">C</div>
                                 <div className="flex flex-col leading-none font-black uppercase">
                                     <span className="text-xl text-white tracking-tighter">Catalyst</span>
-                                    <span className="text-[10px] text-[#facc15] tracking-[0.3em]">Consult</span>
+                                    <span className="text-[10px] text-[#facc15] tracking-[0.3em] mt-1">Consult</span>
                                 </div>
                             </div>
 
@@ -164,12 +242,12 @@
                                                 ["Упаковка", "Scale-up МСБ (Полная упаковка)", "1 500 000 KZT"],
                                                 ["Крупный чек", "Бизнес-план ГП (Байтерек, БРК, Даму)", "от 10 000 000 KZT"]
                                             ].map((r, i) => (
-                                                <tr key={i} className="hover:bg-slate-50 transition-colors">
+                                                <tr key={i} className="hover:bg-slate-50 transition-colors group">
                                                     <td className="p-10 text-[#ca8a04] font-black text-[15px]">{r[0]}</td>
                                                     <td className="p-10 text-[#0f172a]">{r[1]}</td>
                                                     <td className="p-10 text-right font-black text-xl">
-                                                        <a href={`https://wa.me/77053638505?text=Здравствуйте! Интересует услуга: ${r[1]}`} target="_blank" className="text-slate-900 hover:text-green-600 transition-colors inline-flex items-center justify-end gap-3 group">
-                                                            {r[2]} <i className="fab fa-whatsapp text-green-500 opacity-50 group-hover:opacity-100 transition-all transform group-hover:scale-110"></i>
+                                                        <a href={`https://wa.me/77053638505?text=Здравствуйте! Интересует услуга: ${r[1]}`} target="_blank" className="text-slate-900 group-hover:text-green-600 transition-colors inline-flex items-center justify-end gap-3 w-full">
+                                                            {r[2]} <i className="fab fa-whatsapp text-green-500 opacity-30 group-hover:opacity-100 transition-all transform group-hover:scale-110"></i>
                                                         </a>
                                                     </td>
                                                 </tr>
@@ -195,7 +273,6 @@
                                             <div><p className="text-[11px] font-black uppercase text-slate-400 mb-2 tracking-widest">Цена</p><p className="font-black text-3xl uppercase tracking-tighter text-[#ca8a04]">500 000 ₸</p></div>
                                         </div>
                                         
-                                        {/* Добавлена детальная программа практикума */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-slate-600 mb-8">
                                             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
                                                 <h4 className="font-black text-[#0f172a] uppercase mb-3"><i className="fas fa-check text-[#ca8a04] mr-2"></i>Часть 1 (Разбор проектов)</h4>
@@ -209,7 +286,6 @@
 
                                         <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mb-10">16 модулей • Интенсив с 10:00 до 19:00 • Раздаточные материалы</p>
                                         
-                                        {/* Кнопка заявки на практикум */}
                                         <button onClick={() => setModal('partner')} className="btn-primary py-6 px-12 rounded-2xl text-lg shadow-xl inline-block">
                                             ОСТАВИТЬ ЗАЯВКУ
                                         </button>
@@ -250,7 +326,7 @@
                                     <div className="lg:col-span-5 bg-white text-slate-900 p-12 rounded-[3.5rem] shadow-2xl lg:sticky lg:top-36">
                                         <p className="text-[12px] font-black uppercase text-slate-400 tracking-widest mb-4">Стоимость обучения</p>
                                         <div className="text-7xl font-black mb-12 tracking-tighter text-[#0f172a]">500 000 <span className="text-2xl uppercase">₸</span></div>
-                                        <button onClick={() => setModal('partner')} className="w-full btn-primary py-7 rounded-2xl">
+                                        <button onClick={() => setModal('partner')} className="w-full btn-primary py-7 rounded-2xl text-lg">
                                             ОТПРАВИТЬ ЗАЯВКУ
                                         </button>
                                     </div>
@@ -268,6 +344,7 @@
                                 <div className="flex gap-10 text-[11px] font-black uppercase tracking-[0.3em]">
                                     <a href="offer.html" className="text-white hover:text-[#facc15] transition-colors">Договор оферты</a>
                                     <a href="privacy.html" className="text-white hover:text-[#facc15] transition-colors">Конфиденциальность</a>
+                                    <a href="agreement.html" className="text-white hover:text-[#facc15] transition-colors">Пользовательское соглашение</a>
                                 </div>
                                 <div className="flex gap-6 text-2xl text-white">
                                     <a href="https://www.instagram.com/catalyst_consult.kz" target="_blank" className="hover:text-[#facc15] transition-all"><i className="fab fa-instagram"></i></a>
@@ -281,14 +358,13 @@
                     {modal !== 'none' && (
                         <div className="fixed inset-0 z-[200] modal-blur flex items-center justify-center p-4">
                             
-                            {/* 1. ИНТРО (Детальное описание программы инкубации) */}
+                            {/* 1. ИНТРО */}
                             {modal === 'intro' && (
                                 <div className="bg-white text-slate-900 w-full max-w-4xl rounded-[3rem] p-10 lg:p-14 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scroll">
                                     <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-400 hover:text-black transition-colors"><i className="fas fa-times text-2xl"></i></button>
                                     
                                     <h3 className="text-3xl lg:text-4xl font-black uppercase text-center mb-8 tracking-tighter">Программа инкубации <span className="text-[#ca8a04]">0→1</span></h3>
                                     
-                                    {/* Критическое уведомление и партнерство SDU */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                                         <div className="bg-[#0f172a] p-6 rounded-3xl text-white shadow-lg">
                                             <div className="flex items-center gap-4 mb-3">
@@ -297,7 +373,7 @@
                                             </div>
                                             <p className="text-xs font-medium opacity-90 leading-relaxed">Официальная программа подготовки проектов, разработанная совместно с экспертами <b>SDU University</b> по спецзаказу <b>НАРИ АО Qazinnovations</b>.</p>
                                         </div>
-                                        <div className="bg-red-50 border border-red-200 p-6 rounded-3xl shadow-sm flex items-center">
+                                        <div className="bg-red-50 border border-red-200 p-6 rounded-3xl shadow-sm flex items-center relative group">
                                             <p className="text-xs font-bold text-red-700 leading-relaxed">
                                                 <i className="fas fa-exclamation-triangle text-red-500 mr-2 text-lg"></i>
                                                 <b>КРИТИЧЕСКОЕ УВЕДОМЛЕНИЕ:</b> Название проекта в выдаваемом сертификате должно <b>СТРОГО</b> соответствовать вашей заявке на грантовое финансирование!
@@ -305,7 +381,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Видео-заглушка для введения */}
                                     <div className="w-full aspect-video bg-[#0f172a] rounded-[2rem] shadow-xl relative overflow-hidden flex items-center justify-center mb-10 group cursor-pointer border-4 border-slate-100">
                                         <div className="absolute inset-0 bg-[#facc15]/10 group-hover:bg-[#facc15]/20 transition-all"></div>
                                         <div className="w-20 h-20 bg-[#facc15] rounded-full flex items-center justify-center pl-2 shadow-[0_10px_30px_rgba(202,138,4,0.4)] transform group-hover:scale-110 transition-all">
@@ -314,7 +389,6 @@
                                         <span className="absolute bottom-6 left-8 text-white font-black uppercase tracking-widest text-xs opacity-70">Смотреть Введение в программу</span>
                                     </div>
 
-                                    {/* Детальный список модулей */}
                                     <h4 className="text-lg font-black uppercase mb-6 text-[#0f172a] text-center border-b-2 border-slate-100 pb-4">Содержание 10 модулей:</h4>
                                     <div className="space-y-4 mb-10">
                                         {INCUBATION_LESSONS.map((lesson, i) => (
@@ -334,50 +408,76 @@
                                 </div>
                             )}
 
-                            {/* 2. РЕГИСТРАЦИЯ */}
+                            {/* 2. РЕГИСТРАЦИЯ И ОПЛАТА */}
                             {modal === 'reg' && (
-                                <div className="bg-white text-slate-900 w-full max-w-xl rounded-[3rem] p-12 shadow-2xl relative">
-                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
-                                    <form onSubmit={(e) => { e.preventDefault(); localStorage.setItem('catalyst_project_name', e.target.projectName.value); setModal('pay'); }} className="space-y-5">
-                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8">Регистрация</h3>
+                                <div className="bg-white text-slate-900 w-full max-w-lg rounded-[3rem] p-10 relative">
+                                    <button onClick={() => setModal('none')} className="absolute top-6 right-6 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
+                                    
+                                    <form className="space-y-4">
+                                        <h3 className="text-2xl font-black uppercase tracking-tighter text-center mb-6 italic">Оформление заявки</h3>
                                         
-                                        <input type="email" placeholder="EMAIL" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
-                                        <input type="tel" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
-                                        
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <input type="text" placeholder="КОМПАНИЯ (ТОО/ИП)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
-                                            <input type="text" placeholder="БИН / ИИН" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#facc15]" required/>
+                                        <div>
+                                            <input type="email" name="email" placeholder="EMAIL" className={`w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border ${errors.email ? 'border-red-500' : 'border-slate-100'}`} value={formData.email} onChange={handleChange} required/>
+                                            {errors.email && <p className="error-hint">{errors.email}</p>}
                                         </div>
 
-                                        <input name="projectName" type="text" placeholder="НАИМЕНОВАНИЕ ПРОЕКТА (КАК В ЗАЯВКЕ!)" className="w-full bg-red-50 p-6 rounded-2xl font-black uppercase text-xs border-2 border-red-300 focus:border-red-500 placeholder-red-400" required/>
+                                        <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border border-slate-100" value={formData.phone} onChange={handleChange} required/>
                                         
-                                        <button type="submit" className="w-full btn-primary py-6 rounded-2xl mt-4">Далее к оплате</button>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <input type="text" name="company" placeholder="КОМПАНИЯ (ТОО/ИП)" className="w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border border-slate-100" value={formData.company} onChange={handleChange} required/>
+                                            <div>
+                                                <input type="text" name="bin" placeholder="БИН / ИИН" className={`w-full bg-slate-50 p-5 rounded-xl font-bold uppercase text-[11px] outline-none border ${errors.bin ? 'border-red-500' : 'border-slate-100'}`} value={formData.bin} onChange={handleChange} required/>
+                                                {errors.bin && <p className="error-hint">{errors.bin}</p>}
+                                            </div>
+                                        </div>
+
+                                        <div className="relative">
+                                            {showTooltip && (
+                                                <div className="tooltip-alert">
+                                                    Название должно строго совпадать с заявкой в QazInnovations!
+                                                </div>
+                                            )}
+                                            <input name="projectName" type="text" placeholder="НАИМЕНОВАНИЕ ПРОЕКТА (КАК В ЗАЯВКЕ!)" 
+                                                onFocus={() => setShowTooltip(true)} onBlur={() => setShowTooltip(false)}
+                                                className="w-full bg-red-50 p-5 rounded-xl font-black uppercase text-[11px] border-2 border-red-200 focus:border-red-500 placeholder-red-400 outline-none" 
+                                                value={formData.projectName} onChange={handleChange} required/>
+                                        </div>
+
+                                        <div className="p-4 bg-slate-50 rounded-xl mt-4">
+                                            <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Выберите ваш банк:</p>
+                                            <select name="bank" className="w-full bg-transparent font-bold uppercase text-xs outline-none cursor-pointer" value={formData.bank} onChange={handleChange}>
+                                                <option value="Kaspi">Kaspi.kz</option>
+                                                <option value="Halyk">Halyk Bank</option>
+                                                <option value="Forte">Forte Bank</option>
+                                                <option value="Other">Другой / Юр. лицо</option>
+                                            </select>
+                                        </div>
+
+                                        <label className="flex items-start gap-3 mt-4 cursor-pointer">
+                                            <input type="checkbox" className="mt-1 accent-[#ca8a04]" checked={agreed} onChange={e => setAgreed(e.target.checked)} />
+                                            <span className="text-[10px] text-slate-500 uppercase font-bold italic leading-relaxed">Согласен с договором оферты и политикой конфиденциальности.</span>
+                                        </label>
+
+                                        <div className="grid grid-cols-1 gap-3 mt-6">
+                                            <button onClick={(e) => handleSubmitToGoogle(e, 'Удаленный счет по номеру')} disabled={loading || !agreed || !!errors.email || !!errors.bin || formData.bin.length !== 12 || !formData.email || !formData.projectName} 
+                                                className="w-full bg-[#0f172a] text-white py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-opacity">
+                                                {loading ? 'Отправка...' : 'Выставить счет по номеру (10 000 ₸)'}
+                                            </button>
+                                            <button onClick={(e) => handleSubmitToGoogle(e, 'Счет по реквизитам')} disabled={loading || !agreed || !!errors.email || !!errors.bin || formData.bin.length !== 12 || !formData.email || !formData.projectName}
+                                                className="w-full border-2 border-slate-900 py-5 rounded-xl text-[11px] font-black uppercase disabled:opacity-30 transition-opacity text-slate-900 hover:bg-slate-50">
+                                                Запросить счет на юр. лицо
+                                            </button>
+                                        </div>
                                     </form>
                                 </div>
                             )}
 
-                            {/* 3. ОПЛАТА */}
-                            {modal === 'pay' && (
-                                <div className="bg-white text-slate-900 w-full max-w-md rounded-[3.5rem] p-12 shadow-2xl relative text-center">
-                                    <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
-                                    <div className="text-7xl font-black text-[#ca8a04] mb-10 tracking-tighter">10 000 ₸</div>
-                                    <label className="flex items-start gap-4 bg-slate-50 p-6 rounded-3xl border border-slate-100 cursor-pointer text-left mb-10">
-                                        <input type="checkbox" onChange={e => setAgreed(e.target.checked)} className="mt-1 accent-[#ca8a04] w-5 h-5" />
-                                        <span className="text-[11px] font-bold text-slate-500 uppercase leading-relaxed italic">Я согласен с Договором оферты и Политикой конфиденциальности.</span>
-                                    </label>
-                                    <div className="space-y-4">
-                                        <button disabled={!agreed} onClick={() => window.location.href='cabinet.html'} className="w-full py-6 border-2 border-red-500 text-red-600 rounded-2xl font-black uppercase text-[12px] disabled:opacity-30 hover:bg-red-50 transition-colors">Оплатить Kaspi.kz</button>
-                                        <button disabled={!agreed} onClick={() => window.location.href='cabinet.html'} className="w-full py-6 border-2 border-green-600 text-green-700 rounded-2xl font-black uppercase text-[12px] disabled:opacity-30 hover:bg-green-50 transition-colors">Оплатить Halyk</button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 4. ЗАЯВКА ПАРТНЕРА / ПРАКТИКУМ */}
+                            {/* 3. ЗАЯВКА ПАРТНЕРА / ПРАКТИКУМ */}
                             {modal === 'partner' && (
                                 <div className="bg-white text-slate-900 w-full max-w-xl rounded-[3rem] p-12 shadow-2xl relative">
                                     <button onClick={() => setModal('none')} className="absolute top-8 right-8 text-slate-300 hover:text-black"><i className="fas fa-times text-2xl"></i></button>
                                     <form action="https://formspree.io/f/info@catalyst-consult.kz" method="POST" className="space-y-6">
-                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8">Отправить заявку</h3>
+                                        <h3 className="text-3xl font-black uppercase tracking-tighter text-center mb-8 italic">Отправить заявку</h3>
                                         <input type="text" name="name" placeholder="ФИО ПОЛНОСТЬЮ" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#ca8a04]" required/>
                                         <input type="tel" name="phone" placeholder="ТЕЛЕФОН (+7)" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 focus:border-[#ca8a04]" required/>
                                         <select name="role" className="w-full bg-slate-50 p-6 rounded-2xl font-bold uppercase text-xs outline-none border border-slate-200 cursor-pointer appearance-none">
