@@ -223,24 +223,103 @@
                                     Комплексная подготовка вашего бизнеса к привлечению инвестиций на уровне стандартов НИХ «Байтерек». Практическая программа от топ-менеджеров рынка.
                                 </p>
                             </div>
-                            
-                            <div className="lg:w-2/5 w-full">
-                                <div className="bg-white/5 backdrop-blur-md border border-white/10 p-12 rounded-[3rem] shadow-2xl relative border-l-[10px] border-l-[#facc15]">
-                                    <div className="absolute top-8 right-8 w-14 h-14 bg-black rounded-xl flex items-center justify-center overflow-hidden border border-white/10">
-                                        <img src="image_98e027.jpg" alt="SDU" className="w-full h-full object-contain" />
-                                    </div>
-                                    
-                                    <h2 className="text-2xl lg:text-3xl font-black uppercase mb-2 text-white">Бизнес-инкубация 0→1</h2>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mb-12">Для Qazinnovations</p>
-                                    
-                                    <div className="text-6xl lg:text-7xl font-black mb-12 tracking-tighter text-white">
-                                        10 000 <span className="text-[#facc15] text-2xl uppercase tracking-normal">₸</span>
-                                    </div>
-                                    
-                                    <button onClick={() => setModal('intro')} className="w-full bg-[#facc15] hover:bg-[#eab308] text-[#0f172a] font-black py-6 rounded-2xl text-lg transition-all transform hover:-translate-y-1 shadow-xl uppercase">
-                                        ПОЛУЧИТЬ СЕРТИФИКАТ
-                                    </button>
-                                </div>
+                          <div className="lg:w-2/5 w-full">
+    <div className="bg-[#111827] backdrop-blur-md border border-white/10 p-6 lg:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+        
+        {/* Логотипы */}
+        <div className="flex justify-between items-center mb-8 px-2">
+            <img src="img/turan-logo.png" alt="Turan" className="h-8 lg:h-10 object-contain" />
+            <img src="img/qazinn-logo.png" alt="QazInnovations" className="h-10 lg:h-12 object-contain" />
+        </div>
+
+        {/* Заголовок */}
+        <div className="mb-6">
+            <h2 className="text-xl lg:text-2xl font-black uppercase text-white leading-tight">
+                Бизнес-инкубация <span className="text-[#facc15]">0→1</span>
+            </h2>
+            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em]">QazInnovations & Turan University</p>
+        </div>
+
+        {/* Форма сбора лидов */}
+        <div className="space-y-3">
+            <input 
+                id="lead-name"
+                type="text" 
+                placeholder="Ваше ФИО" 
+                className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white placeholder-slate-500 focus:border-[#facc15] outline-none transition-all text-sm"
+            />
+            <input 
+                id="lead-phone"
+                type="tel" 
+                placeholder="WhatsApp номер (+7...)" 
+                className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white placeholder-slate-500 focus:border-[#facc15] outline-none transition-all text-sm"
+            />
+            <input 
+                id="lead-project"
+                type="text" 
+                placeholder="Название проекта" 
+                className="w-full bg-white/5 border border-white/10 p-4 rounded-xl text-white placeholder-slate-500 focus:border-[#facc15] outline-none transition-all text-sm"
+            />
+            
+            <div className="py-2 text-[11px] text-slate-400 leading-snug px-1">
+                Гранты до <b className="text-white text-xs">100 млн ₸</b>. Сертификат включен. <br/>
+                <span className="text-[#facc15] font-bold">Старт 1 апреля • 300 000 ₸</span>
+            </div>
+
+            <button 
+                id="submit-btn"
+                onClick={() => {
+                    const scriptURL = 'https://script.google.com/macros/s/AKfycbwL00r50NOiFlpinmn-_LgfuZmZYM6LC-v8p9s535qJBtWVl-WSW2Tz5AFznCaJ_2cC/exec';
+                    const name = document.getElementById('lead-name').value;
+                    const phone = document.getElementById('lead-phone').value;
+                    const project = document.getElementById('lead-project').value;
+                    const btn = document.getElementById('submit-btn');
+
+                    if (!name || !phone) {
+                        alert("Пожалуйста, введите имя и телефон");
+                        return;
+                    }
+
+                    btn.innerText = "ОТПРАВЛЯЕМ...";
+                    btn.disabled = true;
+
+                    const formData = new URLSearchParams();
+                    formData.append('name', name);
+                    formData.append('phone', phone);
+                    formData.append('project', project);
+                    formData.append('email', 'Лид с таргета');
+
+                    fetch(scriptURL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData.toString()
+                    })
+                    .then(() => {
+                        alert("Заявка принята! Мы свяжемся с вами в WhatsApp.");
+                        document.getElementById('lead-name').value = "";
+                        document.getElementById('lead-phone').value = "";
+                        document.getElementById('lead-project').value = "";
+                        btn.disabled = false;
+                        btn.innerText = "ПОЛУЧИТЬ СЕРТИФИКАТ";
+                    })
+                    .catch(() => {
+                        alert("Ошибка. Попробуйте еще раз.");
+                        btn.disabled = false;
+                        btn.innerText = "ПОЛУЧИТЬ СЕРТИФИКАТ";
+                    });
+                }} 
+                className="w-full bg-[#facc15] active:scale-95 hover:bg-[#eab308] text-[#0f172a] font-black py-5 rounded-xl transition-all uppercase tracking-widest text-sm shadow-lg shadow-[#facc15]/10"
+            >
+                ПОЛУЧИТЬ СЕРТИФИКАТ
+            </button>
+        </div>
+
+        <p className="text-center mt-4 text-[10px] text-slate-600 uppercase tracking-tighter">
+            Инфо: +7 776 240 65 55
+        </p>
+    </div>
+</div>
                             </div>
                         </section>
 
