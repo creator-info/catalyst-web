@@ -3,133 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Медиа-галерея — Catalyst Consult</title>
+    <title>Фотогалерея — Catalyst Consult</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;900&display=swap');
-        body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; margin: 0; }
-        
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .media-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            position: relative;
-            aspect-ratio: 4/3;
-        }
-
-        .media-card:hover {
-            transform: translateY(-5px);
-            border-color: #facc15;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .media-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-
-        .media-card:hover img {
-            opacity: 1;
-        }
-
-        .card-label {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 15px;
-            background: linear-gradient(transparent, rgba(15, 23, 42, 0.9));
-            font-size: 10px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #facc15;
-        }
-
-        .btn-back {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            transition: all 0.3s;
-        }
-
-        .btn-back:hover {
-            background: #facc15;
-            color: #0f172a;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap');
+        body { font-family: 'Montserrat', sans-serif; background-color: #0f172a; color: white; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
 
-    <nav class="p-6 flex justify-between items-center border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50">
-        <a href="index.html" class="btn-back">
-    <i class="fas fa-arrow-left mr-2"></i> Вернуться на catalyst-consult.kz
-</a>
-        <div class="text-right">
-            <div class="font-black text-lg leading-none uppercase">Catalyst <span class="text-[#facc15]">Media</span></div>
+    <div class="absolute top-8 left-6 lg:left-12 z-50">
+        <a href="index.html" class="flex items-center gap-3 text-slate-400 hover:text-[#facc15] transition-colors font-bold uppercase text-xs tracking-widest">
+            <i class="fas fa-arrow-left"></i> Назад на главную
+        </a>
+    </div>
+
+    <main class="flex-grow flex flex-col items-center justify-center py-20 px-6 max-w-7xl mx-auto w-full">
+        
+        <div class="text-center mb-16 lg:mb-24 mt-10">
+            <h1 class="text-5xl lg:text-7xl font-black uppercase tracking-tighter text-white mb-6 drop-shadow-lg">
+                Фотогалерея
+            </h1>
+            <p class="text-[10px] lg:text-xs font-black uppercase tracking-[0.3em] text-slate-400">
+                Награды, сертификаты и моменты с наших мероприятий
+            </p>
         </div>
-    </nav>
 
-    <header class="max-w-7xl mx-auto px-6 py-16 text-center">
-        <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-4">Фотогалерея</h1>
-        <p class="text-slate-400 max-w-2xl mx-auto font-medium uppercase text-xs tracking-[0.2em]">Награды, сертификаты и моменты с наших мероприятий</p>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 pb-24">
-        <div class="gallery-grid">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full mb-16">
             
-            <div class="media-card group">
-                <img src="image_98e027.jpg" alt="SDU Certificate">
-                <div class="card-label">Сертификат SDU Extension Center</div>
+            <div class="group bg-white/5 border border-white/10 rounded-[2rem] p-6 transition-all duration-500 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(250,204,21,0.1)] hover:border-[#facc15]/30 flex flex-col">
+                <div class="bg-[#0b1120] rounded-2xl aspect-[4/3] flex items-center justify-center overflow-hidden mb-6 relative border border-white/5 group-hover:border-white/10 transition-colors">
+                    <i class="fas fa-graduation-cap text-5xl text-slate-700 group-hover:text-slate-500 transition-colors"></i>
+                </div>
+                <div class="mt-auto">
+                    <p class="text-[11px] font-black uppercase tracking-widest text-[#facc15]">Сертификат SDU Extension Center</p>
+                </div>
             </div>
 
-            <div class="media-card flex items-center justify-center bg-slate-800/50">
-                <div class="text-center p-6">
-                    <i class="fas fa-images text-3xl text-slate-700 mb-4"></i>
-                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Место для вашего фото</p>
+            <div class="group bg-white/5 border border-white/10 rounded-[2rem] p-6 transition-all duration-500 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(250,204,21,0.1)] hover:border-[#facc15]/30 flex flex-col">
+                <div class="bg-[#0b1120] rounded-2xl aspect-[4/3] flex items-center justify-center overflow-hidden mb-6 relative border border-white/5 group-hover:border-white/10 transition-colors">
+                    <i class="fas fa-camera text-5xl text-slate-700 group-hover:text-slate-500 transition-colors"></i>
+                    <span class="absolute bottom-6 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">Место для вашего фото</span>
                 </div>
-                <div class="card-label">Практикум Алматы 2026</div>
+                <div class="mt-auto">
+                    <p class="text-[11px] font-black uppercase tracking-widest text-[#facc15]">Практикум Алматы 2026</p>
+                </div>
             </div>
 
-            <div class="media-card flex items-center justify-center bg-slate-800/50">
-                <div class="text-center p-6">
-                    <i class="fas fa-certificate text-3xl text-slate-700 mb-4"></i>
-                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Лицензия / Награда</p>
+            <div class="group bg-white/5 border border-white/10 rounded-[2rem] p-6 transition-all duration-500 hover:bg-white/10 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(250,204,21,0.1)] hover:border-[#facc15]/30 flex flex-col">
+                <div class="bg-[#0b1120] rounded-2xl aspect-[4/3] flex items-center justify-center overflow-hidden mb-6 relative border border-white/5 group-hover:border-white/10 transition-colors">
+                    <i class="fas fa-award text-5xl text-slate-700 group-hover:text-slate-500 transition-colors"></i>
+                    <span class="absolute bottom-6 text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">Лицензия / Награда</span>
                 </div>
-                <div class="card-label">Благодарственное письмо QazInnovations</div>
+                <div class="mt-auto">
+                    <p class="text-[11px] font-black uppercase tracking-widest text-[#facc15]">Благодарственное письмо QazInnovations</p>
+                </div>
             </div>
 
         </div>
 
-        {/* Ссылка на Google Диск для удобства */}
-        <div class="mt-20 p-10 rounded-[3rem] border-2 border-dashed border-white/10 text-center">
-            <p class="text-slate-500 font-bold uppercase text-xs tracking-widest mb-6">Все материалы хранятся в облаке</p>
-            <a href="https://drive.google.com/drive/folders/1wO26jRtVLeHiHnLgFZWeyOCwPYG9f9tD" target="_blank" class="text-[#facc15] font-black underline uppercase text-sm hover:text-white transition-colors">
-                Открыть архив в Google Drive <i class="fas fa-external-link-alt ml-2"></i>
+        <div class="text-center">
+            <a href="#" target="_blank" class="inline-flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-[#facc15] border border-slate-700 hover:border-[#facc15] py-4 px-8 rounded-xl transition-all hover:bg-[#facc15]/10">
+                <i class="fab fa-google-drive text-lg"></i> Открыть материалы на Google Диск
             </a>
         </div>
-    </main>
 
-    <footer class="py-10 border-t border-white/5 text-center">
-        <p class="text-[10px] font-black uppercase text-slate-600 tracking-[0.4em]">Catalyst Consult • 2026</p>
-    </footer>
+    </main>
 
 </body>
 </html>
